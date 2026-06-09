@@ -195,8 +195,20 @@ def _detect_article_numbers(message: str) -> List[str]:
 
 def _search_laws_for_query(query: str) -> str:
     try:
-        _, text = law_search_tool.search(query, num_results=3, verify=True)
-        return text
+        result = law_search_tool.search(query, num_results=3)
+        message = result.get("message", "")
+        articles = result.get("articles", [])
+        laws = result.get("results", [])
+        parts = []
+        if message:
+            parts.append(message)
+        if articles:
+            for a in articles:
+                parts.append(f"【{a['law_name']} {a['article_title']}】\n{a['content']}")
+        elif laws:
+            for l in laws[:3]:
+                parts.append(f"• {l['status'][:2]} {l['title']} ({l['effective_date']})")
+        return "\n".join(parts) if parts else ""
     except Exception as e:
         print(f"法条检索失败: {e}")
         return ""
@@ -729,20 +741,19 @@ async def list_knowledge_documents():
 @app.post("/api/law/search")
 async def search_law(request: LawSearchRequest):
     """
-    法条检索接口 - 对接国家法律法规数据库 (flk.npc.gov.cn)
-    自动标注时效性：有效 / 已废止 / 已修改 / 尚未生效
+    法条检索接口（增强版）
+    - 支持精准法律名称搜索
+    - 支持"第X条"查询，返回具体条款内容
+    - 自动标注时效性状态
     """
     try:
-        results, text = law_search_tool.search(
+        result = law_search_tool.search(
             query=request.query,
             num_results=request.num_results,
-            verify=request.verify
         )
         return {
             "success": True,
-            "query": request.query,
-            "results": results,
-            "formatted": text,
+            **result,
             "source": "国家法律法规数据库 (flk.npc.gov.cn)"
         }
     except Exception as e:
