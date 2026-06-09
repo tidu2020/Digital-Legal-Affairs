@@ -1,0 +1,26 @@
+﻿
+
+StatusCode        : 200
+StatusDescription : OK
+Content           : {"status":"healthy","timestamp":"2026-06-09T10:03:08.646720
+                    ","knowledge_base":{"total_chunks":0,"dimension":768,"index
+                    ed":false}}
+RawContent        : HTTP/1.1 200 OK
+                    Content-Length: 129
+                    Content-Type: application/json
+                    Date: Tue, 09 Jun 2026 02:03:08 GMT
+                    Server: uvicorn
+                    
+                    {"status":"healthy","timestamp":"2026-06-09T10:03:08.646720
+                    ","knowledge_ba...
+Forms             : 
+Headers           : {[Content-Length, 129], [Content-Type, application/json], [
+                    Date, Tue, 09 Jun 2026 02:03:08 GMT], [Server, uvicorn]}
+Images            : {}
+InputFields       : {}
+Links             : {}
+ParsedHtml        : 
+RawContentLength  : 129
+
+
+

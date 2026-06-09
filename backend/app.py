@@ -26,6 +26,10 @@ from law_validator import (
     generate_validation_report, generate_correction_markdown,
     should_auto_validate,
 )
+from confidence import (
+    assess_confidence, generate_confidence_markdown,
+    annotation_to_dict,
+)
 
 BASE_DIR = Path(__file__).parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
@@ -83,6 +87,7 @@ class ChatResponse(BaseModel):
     sources: Optional[List[Dict[str, Any]]] = None
     law_verification: Optional[Dict[str, Any]] = None
     law_validation_report: Optional[Dict[str, Any]] = None
+    confidence: Optional[Dict[str, Any]] = None
 
 
 class LawSearchRequest(BaseModel):
@@ -324,7 +329,7 @@ async def chat(request: ChatRequest):
     law_context = _build_law_context(current_message)
 
     # 构建系统提示词
-    system_prompt = build_legal_system_prompt(context + law_context)
+    system_prompt = build_legal_system_prompt(context + law_context, current_message)
 
     # 构建完整消息列表
     full_messages = [
@@ -347,6 +352,16 @@ async def chat(request: ChatRequest):
     enhanced_response, validation_report = await _run_post_validation(
         response_text, current_message, has_attachments
     )
+
+    # 评估置信度
+    confidence_annotation = assess_confidence(
+        validation_report, has_attachments, current_message
+    )
+    confidence_dict = annotation_to_dict(confidence_annotation)
+
+    # 追加置信度标注到回复
+    confidence_md = generate_confidence_markdown(confidence_annotation)
+    enhanced_response = enhanced_response + confidence_md
 
     # 保存对话历史
     session_manager.add_message(session_id, "user", current_message)
@@ -372,7 +387,8 @@ async def chat(request: ChatRequest):
         response=enhanced_response,
         sources=sources if sources else None,
         law_verification=law_verification,
-        law_validation_report=validation_report
+        law_validation_report=validation_report,
+        confidence=confidence_dict
     )
 
 
@@ -413,7 +429,7 @@ async def chat_stream(request: ChatRequest):
     law_context = _build_law_context(current_message)
 
     # 构建系统提示词
-    system_prompt = build_legal_system_prompt(context + law_context)
+    system_prompt = build_legal_system_prompt(context + law_context, current_message)
 
     # 构建完整消息列表
     full_messages = [
@@ -451,6 +467,20 @@ async def chat_stream(request: ChatRequest):
                 full_response = enhanced_response
                 yield f"data: {json.dumps({'validation_report': validation_report}, ensure_ascii=False)}\n\n"
                 yield f"data: {json.dumps({'content': generate_correction_markdown(validation_report)}, ensure_ascii=False)}\n\n"
+
+            # 评估置信度
+            confidence_annotation = assess_confidence(
+                validation_report, has_attachments, current_message
+            )
+            confidence_dict = annotation_to_dict(confidence_annotation)
+
+            # 发送置信度数据到前端
+            yield f"data: {json.dumps({'confidence': confidence_dict}, ensure_ascii=False)}\n\n"
+
+            # 追加置信度标注到回复
+            confidence_md = generate_confidence_markdown(confidence_annotation)
+            yield f"data: {json.dumps({'content': confidence_md}, ensure_ascii=False)}\n\n"
+            full_response = full_response + confidence_md
 
             # 保存对话历史
             session_manager.add_message(session_id, "user", current_message)

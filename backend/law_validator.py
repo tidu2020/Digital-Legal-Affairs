@@ -106,6 +106,22 @@ LAW_CONTEXT_RULES = {
     '制度': ['中华人民共和国公司法', '中华人民共和国立法法', '中华人民共和国行政许可法'],
 }
 
+HIERARCHY_LEVELS = {
+    1: "法律",
+    2: "行政法规",
+    3: "地方性法规",
+    4: "部门规章",
+    5: "司法解释",
+}
+
+HIERARCHY_KEYWORDS = {
+    1: ["法"],
+    2: ["条例"],
+    3: ["地方性法规", "省", "自治区", "直辖市", "设区的市"],
+    4: ["办法", "规定", "细则"],
+    5: ["司法解释", "批复", "解答"],
+}
+
 
 @dataclass
 class LawReference:
@@ -116,6 +132,19 @@ class LawReference:
     article_num: Optional[str] = None
     paragraph: Optional[str] = None
     context_keywords: List[str] = field(default_factory=list)
+
+
+@dataclass
+class LawVerificationDetail:
+    """法条真实性核验详情"""
+    article: str = ""          # 法条编号
+    original_content: str = "" # 原引用的法条内容
+    status: str = ""           # 核验状态: ✅已验证/⚠️存疑/❌错误
+    reason: str = ""           # 核验详细说明
+    correct_article: str = ""  # 修正后的法条编号（如无错误则为空）
+    correct_content: str = ""  # 修正后的法条内容（如无错误则为空）
+    is_effective: bool = True  # 是否现行有效
+    remarks: str = ""          # 备注说明
 
 
 @dataclass
@@ -408,6 +437,112 @@ def _resolve_law_name(law_name: str) -> Optional[str]:
     return None
 
 
+def _determine_hierarchy_level(law_name: str) -> tuple:
+    """根据法律名称判断层级
+
+    Returns:
+        (level_number, level_label) 例如 (1, "法律"), (4, "部门规章")
+    """
+    if not law_name:
+        return (0, "未知")
+
+    # 从高序号向低序号检查，避免"办法"中的"法"被误判为法律
+    for level in sorted(HIERARCHY_KEYWORDS.keys(), reverse=True):
+        keywords = HIERARCHY_KEYWORDS[level]
+        for kw in keywords:
+            if kw in law_name:
+                return (level, HIERARCHY_LEVELS[level])
+
+    return (0, "未知")
+
+
+def _check_hierarchy_conflict(refs: List[LawReference]) -> List[Dict]:
+    """检查不同层级法律之间的潜在冲突（纵向冲突）
+
+    Returns:
+        冲突项列表，每项包含 conflict_type, description, recommendation
+    """
+    if len(refs) < 2:
+        return []
+
+    conflicts = []
+    refs_with_level = []
+    for ref in refs:
+        if ref.full_law_name:
+            level_num, level_label = _determine_hierarchy_level(ref.full_law_name)
+            refs_with_level.append((ref, level_num, level_label))
+
+    valid_refs = [(r, ln, ll) for r, ln, ll in refs_with_level if ln > 0]
+    if len(valid_refs) < 2:
+        return conflicts
+
+    valid_refs.sort(key=lambda x: x[1])
+
+    for i in range(len(valid_refs)):
+        for j in range(i + 1, len(valid_refs)):
+            ri, lni, lli = valid_refs[i]
+            rj, lnj, llj = valid_refs[j]
+            if lnj > lni:
+                conflicts.append({
+                    "conflict_type": "vertical",
+                    "laws": [
+                        {"name": ri.full_law_name or ri.law_name, "level": lni, "level_label": lli},
+                        {"name": rj.full_law_name or rj.law_name, "level": lnj, "level_label": llj},
+                    ],
+                    "description": f"'{lli}'（{ri.full_law_name or ri.law_name}）与 '{llj}'（{rj.full_law_name or rj.law_name}）处于不同层级",
+                    "recommendation": f"上位法优先：应优先适用效力层级更高的 '{lli}'。下位法不得与上位法相抵触。"
+                })
+
+    return conflicts
+
+
+def _check_same_level_conflict(refs: List[LawReference]) -> List[Dict]:
+    """检查同一层级法律之间的潜在冲突（横向冲突）
+
+    Returns:
+        冲突项列表，每项包含 conflict_type, description, recommendation
+    """
+    if len(refs) < 2:
+        return []
+
+    conflicts = []
+    by_level = {}
+
+    for ref in refs:
+        if ref.full_law_name:
+            level_num, level_label = _determine_hierarchy_level(ref.full_law_name)
+            if level_num > 0:
+                if level_num not in by_level:
+                    by_level[level_num] = []
+                by_level[level_num].append((ref, level_label))
+
+    for level_num, items in by_level.items():
+        if len(items) >= 2:
+            level_label = items[0][1]
+            for i in range(len(items)):
+                for j in range(i + 1, len(items)):
+                    ri, lli = items[i]
+                    rj, llj = items[j]
+                    law_name_i = ri.full_law_name or ri.law_name or ""
+                    law_name_j = rj.full_law_name or rj.law_name or ""
+
+                    rec = "新法优先：以最新颁布的法律为准；若存在特别法与一般法关系，则特别法优先。"
+                    description = (
+                        f"同属'{level_label}'层级的 '{law_name_i}' 与 '{law_name_j}' 可能对同一事项有不同规定。"
+                    )
+                    conflicts.append({
+                        "conflict_type": "horizontal",
+                        "laws": [
+                            {"name": law_name_i, "level": level_num, "level_label": lli},
+                            {"name": law_name_j, "level": level_num, "level_label": llj},
+                        ],
+                        "description": description,
+                        "recommendation": rec,
+                    })
+
+    return conflicts
+
+
 def _analyze_context_relevance(ref: LawReference, user_query: str = "") -> str:
     """分析法条与审查场景的关联性"""
     if not ref.context_keywords:
@@ -541,11 +676,21 @@ async def validate_law_references(
 
 def generate_validation_report(
     results: List[ValidationResult],
-    response_text: str = ""
+    response_text: str = "",
+    references: List[LawReference] = None,
 ) -> Dict:
-    """生成结构化校验报告"""
+    """生成结构化校验报告
+
+    Args:
+        results: 校验结果列表
+        response_text: 原始回复文本
+        references: 法条引用列表（用于层级和冲突检查）
+    """
     if not results:
         return None
+
+    if references is None:
+        references = [r.reference for r in results]
 
     valid_count = sum(1 for r in results if r.status == "valid")
     deprecated_count = sum(1 for r in results if r.status == "deprecated")
@@ -555,9 +700,11 @@ def generate_validation_report(
 
     items = []
     for r in results:
+        law_name = r.reference.full_law_name or r.reference.law_name or ""
+        hierarchy_level, hierarchy_label = _determine_hierarchy_level(law_name)
         items.append({
             "reference": r.reference.raw_text,
-            "law_name": r.reference.full_law_name or r.reference.law_name,
+            "law_name": law_name,
             "article": r.reference.article_num,
             "status": r.status,
             "status_label": _status_label(r.status),
@@ -569,6 +716,8 @@ def generate_validation_report(
             "detail_url": r.detail_url,
             "relevance": r.relevance,
             "correction": r.correction,
+            "hierarchy_level": hierarchy_level,
+            "hierarchy_label": hierarchy_label,
         })
 
     has_issues = deprecated_count > 0 or modified_count > 0 or not_found_count > 0 or other_count > 0
@@ -585,7 +734,11 @@ def generate_validation_report(
     if other_count > 0:
         summary.append(f"⚠️ {other_count} 条存在其他问题")
 
-    return {
+    vertical_conflicts = _check_hierarchy_conflict(references)
+    horizontal_conflicts = _check_same_level_conflict(references)
+    all_conflicts = vertical_conflicts + horizontal_conflicts
+
+    report = {
         "total": len(results),
         "valid": valid_count,
         "deprecated": deprecated_count,
@@ -596,6 +749,12 @@ def generate_validation_report(
         "source": "国家法律法规数据库 (flk.npc.gov.cn)",
         "items": items,
     }
+
+    if all_conflicts:
+        report["conflicts"] = all_conflicts
+        report["has_conflicts"] = True
+
+    return report
 
 
 def _status_label(status: str) -> str:
@@ -626,18 +785,19 @@ def generate_correction_markdown(report: Optional[Dict]) -> str:
         lines.append("#### 需要关注的问题：\n")
 
     for item in report["items"]:
-        ref_label = item["reference"]
         status_icon = item["status_label"].split(" ")[0]
+        hierarchy_label = item.get("hierarchy_label", "")
+        hierarchy_info = f" [{hierarchy_label}]" if hierarchy_label and hierarchy_label != "未知" else ""
 
         if item["status"] == "valid":
             if item["article"]:
                 lines.append(
-                    f"- {status_icon} **{item['law_name']}** 第{item['article']}条："
+                    f"- {status_icon} **{item['law_name']}**{hierarchy_info} 第{item['article']}条："
                     f"现行有效 | {item.get('relevance', '')}"
                 )
             else:
                 lines.append(
-                    f"- {status_icon} **{item['law_name']}**："
+                    f"- {status_icon} **{item['law_name']}**{hierarchy_info}："
                     f"现行有效 | {item.get('relevance', '')}"
                 )
         elif item["status"] == "deprecated":
@@ -655,6 +815,33 @@ def generate_correction_markdown(report: Optional[Dict]) -> str:
                     f"- '{item['reference']}' → 请访问 [{item['detail_url']}]({item['detail_url']}) 查看最新版本"
                 )
         lines.append("- 建议在法律文书和合同审查中使用现行有效法律版本")
+
+    if report.get("has_conflicts") and report.get("conflicts"):
+        lines.append("\n#### ⚠️ 层级效力与冲突检查\n")
+        lines.append("> 适用规则：**上位法 > 下位法**，**特别法 > 一般法**，**新法 > 旧法**\n")
+
+        hierarchy_summary = {}
+        for item in report["items"]:
+            hl = item.get("hierarchy_label", "")
+            if hl and hl != "未知":
+                if hl not in hierarchy_summary:
+                    hierarchy_summary[hl] = []
+                hierarchy_summary[hl].append(item["law_name"])
+
+        if hierarchy_summary:
+            lines.append("**引用法条层级分布：**")
+            for level_label in ["法律", "行政法规", "地方性法规", "部门规章", "司法解释"]:
+                if level_label in hierarchy_summary:
+                    laws = hierarchy_summary[level_label]
+                    lines.append(f"- {level_label}：{'、'.join(laws)}")
+
+        lines.append("\n**冲突警告：**")
+        for conflict in report["conflicts"]:
+            conflict_type = conflict["conflict_type"]
+            type_label = "⬆ 纵向冲突（上位法 vs 下位法）" if conflict_type == "vertical" else "↔ 横向冲突（同层级法律）"
+            lines.append(f"\n{type_label}")
+            lines.append(f"- {conflict['description']}")
+            lines.append(f"- 适用规则：{conflict['recommendation']}")
 
     lines.append(f"\n*本报告由系统自动生成，仅供参考。重要法律事务请咨询专业律师。*")
     return "\n".join(lines)
@@ -696,3 +883,302 @@ def get_validator():
     if validator is None:
         validator = True
     return validator
+
+
+def generate_hierarchy_report(refs: List[LawReference]) -> str:
+    """生成层级效力摘要 Markdown 报告
+
+    Args:
+        refs: 法条引用列表
+
+    Returns:
+        Markdown 格式的层级效力摘要
+    """
+    if not refs:
+        return ""
+
+    by_level = {}
+    for ref in refs:
+        law_name = ref.full_law_name or ref.law_name or ""
+        level_num, level_label = _determine_hierarchy_level(law_name)
+        if level_num not in by_level:
+            by_level[level_num] = {"label": level_label, "laws": []}
+        if law_name not in by_level[level_num]["laws"]:
+            by_level[level_num]["laws"].append(law_name)
+
+    lines = ["\n\n---\n", "### 📊 法条层级效力分析\n"]
+    lines.append("> 适用优先级：**上位法 > 下位法**，**特别法 > 一般法**，**新法 > 旧法**\n")
+
+    for level_num in sorted(by_level.keys()):
+        info = by_level[level_num]
+        if level_num == 0:
+            lines.append(f"**⚪ 未知层级**：{'、'.join(info['laws'])}")
+        else:
+            prefix = "🟢" if level_num <= 2 else "🟡" if level_num <= 4 else "🟠"
+            lines.append(f"{prefix} **{info['label']}（层级 {level_num}）**：{'、'.join(info['laws'])}")
+
+    if 1 in by_level and any(k > 1 for k in by_level):
+        lines.append("\n**⚠️ 纵向效力提示：**")
+        higher_laws = by_level.get(1, {}).get("laws", [])
+        levels_above = [by_level[k]["label"] for k in sorted(by_level) if 1 < k < 5]
+        if higher_laws and levels_above:
+            laws_str = "、".join(higher_laws)
+            levels_str = "、".join(levels_above)
+            lines.append(
+                f"- 本报告中引用了法律层级的 {laws_str}，"
+                f"同时引用了 {levels_str}。"
+                f"下位法不得与上位法相抵触，请注意层级效力差异。"
+            )
+
+    lines.append(f"\n*本报告由系统自动生成，仅供参考。重要法律事务请咨询专业律师。*")
+    return "\n".join(lines)
+
+
+# ============================================================
+# 法条真实性核验增强 (Task 5)
+# ============================================================
+
+LAW_ARTICLE_VERIFICATION_PROMPT = """你是一位中国法律法规核验专家，负责对合同审查中引用的每一条法条进行准确性核验。
+
+【核验标准】
+1. 法条编号核验：核实法条编号是否真实存在、编号格式是否正确（如"民法典第153条"而非"民法典153条"）
+2. 法条有效性核验：核实该法条是否为现行有效版本的最新条文
+3. 法条内容核验：核实引用的法条原文是否与官方公布版本一致
+
+【核验结果标记】
+- ✅已验证：法条编号正确、现行有效、内容准确
+- ⚠️存疑：法条编号存疑、或无法确认是否最新（需附具体原因）
+- ❌错误：法条编号错误、或已废止、或内容有实质性错误（需附正确法条信息）
+
+【输入】
+{legal_references}
+
+【输出格式——必须输出纯JSON】
+{{
+  "verification_results": [
+    {{
+      "original_article": "原引用的法条编号",
+      "original_content": "原引用的法条内容",
+      "verification_status": "✅已验证/⚠️存疑/❌错误",
+      "verification_detail": "核验详细说明，至少2句话",
+      "corrected_article": "修正后的法条编号（如无错误则填null）",
+      "corrected_content": "修正后的法条内容（如无错误则填null）",
+      "is_effective": true,
+      "remarks": "备注说明"
+    }}
+  ],
+  "summary": "总体核验结论"
+}}"""
+
+
+def should_verify_articles(law_refs: List[LawReference], risk_levels: List[str]) -> bool:
+    """判断是否需要做法条真实性核验
+
+    Args:
+        law_refs: 法条引用列表
+        risk_levels: 与 law_refs 一一对应的风险等级列表，
+                     如 "🔴高风险"、"🟡中风险"、"🟢低风险"
+
+    Returns:
+        True 如果存在至少一条高风险或中风险法条需要核验
+    """
+    if not law_refs or not risk_levels:
+        return False
+
+    for ref, risk in zip(law_refs, risk_levels):
+        if ref.article_num and ("🔴" in risk or "🟡" in risk):
+            return True
+
+    return False
+
+
+async def verify_law_articles(law_refs: List[LawReference]) -> List[LawVerificationDetail]:
+    """使用 LLM 逐条核验法条引用的真实性
+
+    Args:
+        law_refs: 待核验的法条引用列表
+
+    Returns:
+        LawVerificationDetail 列表，每条对应一个法条引用
+    """
+    if not law_refs:
+        return []
+
+    # 只核验有法条编号的引用
+    refs_to_verify = [r for r in law_refs if r.article_num]
+    if not refs_to_verify:
+        return []
+
+    # 构建 LLM 输入：将法条引用格式化为结构化文本
+    refs_text_parts = []
+    for i, ref in enumerate(refs_to_verify, 1):
+        law_name = ref.full_law_name or ref.law_name or "未知法律"
+        article = ref.article_num or ""
+        refs_text_parts.append(
+            f"{i}. 法律名称：{law_name}，法条编号：第{article}条，"
+            f"原始引用：{ref.raw_text}"
+        )
+    refs_text = "\n".join(refs_text_parts)
+
+    prompt = LAW_ARTICLE_VERIFICATION_PROMPT.format(legal_references=refs_text)
+
+    messages = [
+        {"role": "system", "content": "你是一位中国法律法规核验专家，只输出 JSON 格式结果。"},
+        {"role": "user", "content": prompt},
+    ]
+
+    try:
+        from llm_client import llm_client
+        response = await llm_client.chat(messages, stream=False, temperature=0.3)
+    except Exception as e:
+        print(f"[LawVerification] LLM 调用失败: {e}")
+        # 降级：返回基本核验结果
+        return [
+            LawVerificationDetail(
+                article=f"{ref.full_law_name or ref.law_name or ''}第{ref.article_num}条",
+                original_content=ref.raw_text,
+                status="⚠️存疑",
+                reason=f"LLM 核验服务不可用: {str(e)}",
+                is_effective=True,
+                remarks="无法完成自动核验，请人工核实"
+            )
+            for ref in refs_to_verify
+        ]
+
+    # 解析 LLM 返回的 JSON
+    results = _parse_verification_response(response, refs_to_verify)
+    return results
+
+
+def _parse_verification_response(
+    response: str,
+    refs: List[LawReference]
+) -> List[LawVerificationDetail]:
+    """解析 LLM 返回的法条核验 JSON 结果
+
+    Args:
+        response: LLM 返回的原始文本
+        refs: 原始法条引用列表（用于回退）
+
+    Returns:
+        LawVerificationDetail 列表
+    """
+    import json as json_module
+
+    # 尝试提取 JSON 块
+    json_str = response
+    if "```json" in response:
+        start = response.find("```json") + 7
+        end = response.find("```", start)
+        if end > start:
+            json_str = response[start:end].strip()
+    elif "```" in response:
+        start = response.find("```") + 3
+        end = response.find("```", start)
+        if end > start:
+            json_str = response[start:end].strip()
+
+    try:
+        data = json_module.loads(json_str)
+        verification_results = data.get("verification_results", [])
+    except (json_module.JSONDecodeError, ValueError, AttributeError) as e:
+        print(f"[LawVerification] JSON 解析失败: {e}")
+        # 尝试从文本中提取 JSON 对象
+        import re as re_module
+        json_match = re_module.search(r'\{[\s\S]*"verification_results"[\s\S]*\}', response)
+        if json_match:
+            try:
+                data = json_module.loads(json_match.group())
+                verification_results = data.get("verification_results", [])
+            except (json_module.JSONDecodeError, ValueError):
+                verification_results = []
+        else:
+            verification_results = []
+
+    results = []
+    for i, ref in enumerate(refs):
+        law_name = ref.full_law_name or ref.law_name or ""
+        article_label = f"{law_name}第{ref.article_num}条" if ref.article_num else law_name
+
+        if i < len(verification_results):
+            vr = verification_results[i]
+            corrected_article = vr.get("corrected_article") or ""
+            if corrected_article in ("null", None):
+                corrected_article = ""
+            corrected_content = vr.get("corrected_content") or ""
+            if corrected_content in ("null", None):
+                corrected_content = ""
+            is_effective = vr.get("is_effective", True)
+            if isinstance(is_effective, str):
+                is_effective = is_effective.lower() not in ("false", "no", "0")
+
+            results.append(LawVerificationDetail(
+                article=vr.get("original_article", article_label),
+                original_content=vr.get("original_content", ref.raw_text),
+                status=vr.get("verification_status", "⚠️存疑"),
+                reason=vr.get("verification_detail", "LLM 未返回详细说明"),
+                correct_article=corrected_article,
+                correct_content=corrected_content,
+                is_effective=is_effective,
+                remarks=vr.get("remarks", ""),
+            ))
+        else:
+            # 回退：LLM 返回结果不足
+            results.append(LawVerificationDetail(
+                article=article_label,
+                original_content=ref.raw_text,
+                status="⚠️存疑",
+                reason="LLM 返回结果不完整，缺少该法条的核验信息",
+                is_effective=True,
+                remarks="请人工核实",
+            ))
+
+    return results
+
+
+def generate_verification_markdown(verifications: List[LawVerificationDetail]) -> str:
+    """生成法条核验结果的 Markdown 表格
+
+    Args:
+        verifications: 法条核验详情列表
+
+    Returns:
+        Markdown 格式的核验结果表格
+    """
+    if not verifications:
+        return ""
+
+    lines = ["\n\n---\n", "## 法条核验结果\n"]
+
+    lines.append("| 法条编号 | 核验状态 | 说明 |")
+    lines.append("|----------|----------|------|")
+
+    for v in verifications:
+        article = v.article or "未知"
+        status = v.status or "⚠️存疑"
+        reason = v.reason or ""
+
+        # 截断过长的说明
+        if len(reason) > 100:
+            reason = reason[:97] + "..."
+
+        lines.append(f"| {article} | {status} | {reason} |")
+
+    # 添加修正建议
+    corrections = [v for v in verifications if v.status == "❌错误" and v.correct_article]
+    if corrections:
+        lines.append("\n### 🔧 修正建议\n")
+        for v in corrections:
+            lines.append(f"- **{v.article}** → **{v.correct_article}**")
+            if v.correct_content:
+                lines.append(f"  - 修正后内容：{v.correct_content}")
+
+    # 添加存疑提示
+    doubts = [v for v in verifications if v.status == "⚠️存疑"]
+    if doubts:
+        lines.append("\n### ⚠️ 存疑条目\n")
+        for v in doubts:
+            lines.append(f"- **{v.article}**：{v.reason}")
+
+    lines.append(f"\n*本核验结果由 AI 自动生成，仅供参考。重要法律事务请咨询专业律师。*")
+    return "\n".join(lines)
