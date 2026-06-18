@@ -1,59 +1,21 @@
 """
-法条搜索和验证模块（增强版）
-通过国家法律法规数据库 (flk.npc.gov.cn) 搜索和验证法条
+法条搜索和验证模块
+通过国家法律法规数据库 (flk.npc.gov.cn) 的真实 API 搜索和验证法条
 
-功能：
-1. 精准法律搜索（标题匹配，优先现行有效）
-2. 自动识别"第X条"查询，返回具体条款内容
-3. 自动标注时效性状态
+已验证的 API 接口：
+- GET  /law-search/prompts/search?title=xxx     搜索建议
+- POST /law-search/search/list                    搜索法律列表
+- GET  /law-search/search/flfgDetails?bbbs=xxx    获取法律详情（含目录树）
+- GET  /law-search/search/enumData                获取分类枚举
+- GET  /law-search/index/aggregateData            获取统计数据
 """
 
 import json
 import re
 import requests
-import asyncio
 from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass, field
 
-# ===== 常量 =====
-
-FLK_BASE_URL = "https://flk.npc.gov.cn"
-
-# 中文数字 → 阿拉伯数字
-_CN_NUM_MAP = {'零':0, '〇':0, '一':1, '二':2, '两':2, '三':3, '四':4, '五':5, '六':6, '七':7, '八':8, '九':9, '十':10, '百':100, '千':1000, '万':10000}
-
-def cn_to_arabic(cn: str) -> int:
-    """中文数字转阿拉伯数字"""
-    cn = cn.strip().replace('两', '二')
-    total = 0
-    current = 0
-    unit = 1
-    for ch in cn:
-        if ch in '零〇':
-            continue
-        if ch in '一二三四五六七八九':
-            current = _CN_NUM_MAP[ch]
-        elif ch == '十':
-            current = current or 1
-            unit = 10
-            total += current * unit
-            current = 0
-        elif ch == '百':
-            current = current or 1
-            unit = 100
-            total += current * unit
-            current = 0
-        elif ch == '千':
-            current = current or 1
-            unit = 1000
-            total += current * unit
-            current = 0
-        elif ch == '万':
-            current = current or 1
-            total = (total + current) * 10000
-            current = 0
-    total += current
-    return total
 
 @dataclass
 class LawSearchResult:
@@ -62,10 +24,11 @@ class LawSearchResult:
     bbbs: str
     gbrq: str
     sxrq: str
-    sxx: int  # 1=已废止 2=已修改 3=有效 4=尚未生效
+    sxx: int
     flxz: str
     zdjg_name: str
-    detail_url: str
+    source: str = "国家法律法规数据库"
+    detail_url: str = ""
 
     @property
     def is_valid(self) -> bool:
@@ -73,50 +36,47 @@ class LawSearchResult:
 
     @property
     def status_text(self) -> str:
-        status_map = {1: '已废止', 2: '已修改', 3: '现行有效', 4: '尚未生效'}
-        return status_map.get(self.sxx, '未知')
-
-    @property
-    def status_icon(self) -> str:
-        return {1: '❌', 2: '⚠️', 3: '✅', 4: '🕐'}.get(self.sxx, '❓')
+        status_map = {1: "已废止", 2: "已修改", 3: "有效", 4: "尚未生效"}
+        return status_map.get(self.sxx, "未知")
 
     def to_dict(self) -> Dict:
         return {
             "title": self.title,
             "bbbs": self.bbbs,
-            "publish_date": self.gbrq,
-            "effective_date": self.sxrq,
+            "gbrq": self.gbrq,
+            "sxrq": self.sxrq,
+            "sxx": self.sxx,
             "status": self.status_text,
-            "status_code": self.sxx,
-            "law_type": self.flxz,
-            "authority": self.zdjg_name,
-            "detail_url": self.detail_url,
+            "is_valid": self.is_valid,
+            "flxz": self.flxz,
+            "zdjg_name": self.zdjg_name,
+            "source": self.source,
+            "detail_url": self.detail_url
         }
 
 
 @dataclass
-class ArticleContent:
-    """法条内容"""
-    article_title: str  # 第X条
-    article_number: str  # 143
-    law_name: str
-    content: str
-    source: str
-    confidence: float  # 0-1
+class LawTreeNode:
+    """法律目录树节点"""
+    id: str
+    title: str
+    index: int
+    children: List['LawTreeNode'] = field(default_factory=list)
 
     def to_dict(self) -> Dict:
         return {
-            "article_title": self.article_title,
-            "article_number": self.article_number,
-            "law_name": self.law_name,
-            "content": self.content,
-            "source": self.source,
-            "confidence": self.confidence,
+            "title": self.title,
+            "children": [c.to_dict() for c in self.children]
         }
 
 
 class FLKApiClient:
-    """国家法律法规数据库 API 客户端"""
+    """
+    国家法律法规数据库 API 客户端
+    基于 flk.npc.gov.cn 的真实 API 接口
+    """
+
+    BASE_URL = "https://flk.npc.gov.cn"
 
     def __init__(self, timeout: int = 15):
         self.session = requests.Session()
@@ -124,24 +84,24 @@ class FLKApiClient:
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'application/json, text/plain, */*',
             'Accept-Language': 'zh-CN,zh;q=0.9',
-            'Referer': f'{FLK_BASE_URL}/',
-            'Content-Type': 'application/json;charset=utf-8',
+            'Referer': 'https://flk.npc.gov.cn/',
+            'Content-Type': 'application/json;charset=utf-8'
         })
         self.timeout = timeout
-        self.session.verify = False
 
     def _clean_html(self, text: str) -> str:
         return re.sub(r'<[^>]+>', '', text)
 
     def search_suggest(self, title: str) -> List[str]:
-        """搜索建议"""
         try:
             resp = self.session.get(
-                f"{FLK_BASE_URL}/law-search/prompts/search",
+                f"{self.BASE_URL}/law-search/prompts/search",
                 params={"title": title},
-                timeout=self.timeout,
+                timeout=self.timeout
             )
+            resp.raise_for_status()
             data = resp.json()
+
             if data.get("code") == 200:
                 return [
                     self._clean_html(item["title"])
@@ -149,45 +109,44 @@ class FLKApiClient:
                 ]
             return []
         except Exception as e:
-            print(f"[LawSearch] 搜索建议失败: {e}")
+            print(f"搜索建议请求失败: {e}")
             return []
 
     def search_laws(
         self,
         keyword: str,
-        title_only: bool = True,
+        search_type: int = 2,
         page: int = 1,
         page_size: int = 10,
+        flfg_code_id: Optional[List] = None,
+        zdjg_code_id: Optional[List] = None,
+        sxx: Optional[List] = None,
+        gbrq_year: Optional[List] = None
     ) -> Tuple[List[LawSearchResult], int]:
-        """搜索法律列表
-
-        Args:
-            keyword: 搜索关键词（建议是法律名称，如"民法典"）
-            title_only: True=仅搜索标题（更精准）, False=全文搜索
-        """
         try:
             payload = {
                 "searchRange": 1,
                 "sxrq": [],
                 "gbrq": [],
-                "searchType": 1 if title_only else 2,  # 1=标题, 2=全文
-                "sxx": [],  # 不限制状态，让前端过滤
-                "gbrqYear": [],
-                "flfgCodeId": [],
-                "zdjgCodeId": [],
+                "searchType": search_type,
+                "sxx": sxx or [],
+                "gbrqYear": gbrq_year or [],
+                "flfgCodeId": flfg_code_id or [],
+                "zdjgCodeId": zdjg_code_id or [],
                 "searchContent": keyword,
                 "page": page,
-                "pageSize": page_size,
+                "pageSize": page_size
             }
 
             resp = self.session.post(
-                f"{FLK_BASE_URL}/law-search/search/list",
+                f"{self.BASE_URL}/law-search/search/list",
                 json=payload,
-                timeout=self.timeout,
+                timeout=self.timeout
             )
+            resp.raise_for_status()
             data = resp.json()
 
-            if data.get("code") != 200:
+            if data.get("code") != 200 and "rows" not in data:
                 return [], 0
 
             results = []
@@ -200,388 +159,292 @@ class FLKApiClient:
                     sxx=row.get("sxx", 0),
                     flxz=row.get("flxz", ""),
                     zdjg_name=row.get("zdjgName", ""),
-                    detail_url=f"{FLK_BASE_URL}/detail2?pid={row.get('bbbs', '')}",
+                    detail_url=f"{self.BASE_URL}/detail2?id={row.get('bbbs', '')}"
                 ))
 
             total = data.get("total", 0)
             return results, total
 
         except Exception as e:
-            print(f"[LawSearch] 搜索法律失败: {e}")
+            print(f"搜索法律法规请求失败: {e}")
             return [], 0
+
+    def get_law_detail(self, bbbs: str) -> Optional[Dict]:
+        try:
+            resp = self.session.get(
+                f"{self.BASE_URL}/law-search/search/flfgDetails",
+                params={"bbbs": bbbs},
+                timeout=self.timeout
+            )
+            resp.raise_for_status()
+            data = resp.json()
+
+            if data.get("code") == 200:
+                return data.get("data")
+            return None
+
+        except Exception as e:
+            print(f"获取法律详情失败: {e}")
+            return None
+
+    def get_law_toc(self, bbbs: str) -> Optional[LawTreeNode]:
+        detail = self.get_law_detail(bbbs)
+        if not detail or not detail.get("content"):
+            return None
+
+        content = detail["content"]
+        return self._parse_toc(content)
+
+    def _parse_toc(self, node_data: Dict) -> LawTreeNode:
+        children = []
+        for child in node_data.get("children", []):
+            children.append(self._parse_toc(child))
+
+        return LawTreeNode(
+            id=node_data.get("id", ""),
+            title=node_data.get("title", ""),
+            index=node_data.get("index", 0),
+            children=children
+        )
+
+    def get_article_text(self, law_name: str, article_num: str) -> List[Dict]:
+        try:
+            keyword = f"{law_name} {article_num}"
+            search_url = f"https://cn.bing.com/search?q={requests.utils.quote(keyword)}"
+
+            resp = self.session.get(
+                search_url,
+                timeout=15,
+                headers={
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+            )
+
+            from html import unescape
+            text = resp.text
+
+            results = []
+
+            article_patterns = [
+                r'第[一二三四五六七八九十百千万\d]+条[^<。]{0,200}?',
+                r'第一百[一二三四五六七八九十\d]+[款项][^<。]{0,100}?',
+            ]
+
+            for pattern in article_patterns:
+                matches = re.findall(pattern, text)
+                for match in matches[:5]:
+                    clean = re.sub(r'<[^>]+>', '', unescape(match)).strip()
+                    clean = re.sub(r'\s+', ' ', clean)
+                    if len(clean) > 30 and len(clean) < 500:
+                        results.append({
+                            "text": clean,
+                            "source": "Bing Search"
+                        })
+
+            snippets = re.findall(r'<p[^>]*>([^<]{100,})', text)
+            for snippet in snippets[:20]:
+                clean = re.sub(r'<[^>]+>', '', unescape(snippet)).strip()
+                clean = re.sub(r'\s+', ' ', clean)
+
+                if ('第' in clean and '条' in clean and
+                    len(clean) > 50 and len(clean) < 600 and
+                    not clean.startswith('http') and
+                    not any(x in clean for x in ['百度百科', '百度知道', '视频', '图片'])):
+                    results.append({
+                        "text": clean[:500],
+                        "source": "Bing Search"
+                    })
+
+            seen = set()
+            unique_results = []
+            for r in results:
+                text = r['text']
+                key = text[:80]
+                if key not in seen and len(text) > 50:
+                    seen.add(key)
+                    unique_results.append(r)
+
+            return unique_results[:5]
+
+        except Exception as e:
+            print(f"获取法条文本失败: {e}")
+            return []
 
 
 class LawSearchTool:
-    """法条搜索工具类"""
+    """
+    法条搜索工具类
+    统一接口，供大模型 Function Calling 使用
+    """
 
-    def __init__(self):
+    def __init__(self, web_search_tool=None):
         self.flk_client = FLKApiClient()
+        self.web_search = web_search_tool
+
+    def search(
+        self,
+        query: str,
+        num_results: int = 5,
+        verify: bool = True
+    ) -> Tuple[List[Dict], str]:
+        if verify:
+            return self._search_with_verification(query, num_results)
+        else:
+            return self._search_without_verification(query, num_results)
+
+    def _search_with_verification(self, query: str, num_results: int) -> Tuple[List[Dict], str]:
+        results, total = self.flk_client.search_laws(
+            keyword=query,
+            page_size=num_results
+        )
+
+        if results:
+            output = self._format_results(query, results, total, verified=True)
+            return [r.to_dict() for r in results], output
+
+        if self.web_search:
+            web_results = self.web_search.search_json(
+                query=f"{query} site:flk.npc.gov.cn OR site:gov.cn 法律",
+                num_results=num_results
+            )
+            if web_results:
+                output = f"法条搜索结果：{query}\n"
+                output += "=" * 50 + "\n"
+                output += "⚠️ 以下结果来自网页搜索，未在国家法律法规库中直接验证\n\n"
+                for i, r in enumerate(web_results, 1):
+                    output += f"【{i}】{r.get('title', '')}\n"
+                    output += f"    摘要：{r.get('snippet', '')}\n"
+                    output += f"    链接：{r.get('url', '')}\n\n"
+                output += f"建议访问 {FLKApiClient.BASE_URL} 进行确认\n"
+                return [], output
+
+        return [], f"未找到关于 '{query}' 的相关法条。"
+
+    def _search_without_verification(self, query: str, num_results: int) -> Tuple[List[Dict], str]:
+        results, total = self.flk_client.search_laws(
+            keyword=query,
+            page_size=num_results
+        )
+        if results:
+            return [r.to_dict() for r in results], self._format_results(query, results, total, verified=False)
+        return [], f"未找到关于 '{query}' 的相关法条。"
+
+    def _format_results(
+        self,
+        query: str,
+        results: List[LawSearchResult],
+        total: int,
+        verified: bool
+    ) -> str:
+        output = f"法条搜索结果：{query}\n"
+        output += "=" * 60 + "\n\n"
+
+        for i, r in enumerate(results, 1):
+            if r.is_valid:
+                status = "✅ 有效"
+            elif r.sxx == 1:
+                status = "❌ 已废止"
+            elif r.sxx == 2:
+                status = "⚠️ 已修改"
+            elif r.sxx == 4:
+                status = "🕐 尚未生效"
+            else:
+                status = "❓ 未知"
+
+            output += f"【{i}】{r.title} {status}\n"
+            output += f"    性质：{r.flxz}\n"
+            output += f"    机关：{r.zdjg_name}\n"
+            output += f"    公布：{r.gbrq}  施行：{r.sxrq}\n"
+
+            if verified:
+                output += f"    来源：{r.source}\n"
+
+            output += f"    链接：{r.detail_url}\n\n"
+
+        output += f"- 共找到 {total} 条相关法律法规\n"
+        output += f"- 显示前 {len(results)} 条\n"
+
+        valid_count = sum(1 for r in results if r.is_valid)
+        deprecated_count = sum(1 for r in results if r.sxx == 1)
+        if deprecated_count > 0:
+            output += f"- ⚠️ 其中有 {deprecated_count} 条已废止，请注意\n"
+
+        return output
 
     def validate_law_article(self, law_name: str, article_num: str = "") -> Dict:
-        """校验某部法律的时效性状态（向后兼容）"""
         try:
             keyword = f"{law_name} {article_num}".strip()
-            results, total = self.flk_client.search_laws(
-                keyword=keyword, page_size=3,
-            )
+            results, total = self.flk_client.search_laws(keyword=keyword, page_size=3)
+
             if not results:
                 return {
                     "found": False,
-                    "message": f"未找到与 '{keyword}' 相关的法律"
+                    "message": f"在国家法律法规数据库中未找到 '{keyword}' 的相关法律"
                 }
 
             law = results[0]
-            return {
+            result = {
                 "found": True,
                 "title": law.title,
                 "status": law.status_text,
                 "is_valid": law.is_valid,
-                "law_type": law.flxz,
-                "authority": law.zdjg_name,
-                "publish_date": law.gbrq,
-                "effective_date": law.sxrq,
+                "flxz": law.flxz,
+                "zdjg_name": law.zdjg_name,
+                "gbrq": law.gbrq,
+                "sxrq": law.sxrq,
                 "detail_url": law.detail_url,
-                "total_results": total,
+                "source": law.source,
+                "total_results": total
             }
-        except Exception as e:
-            return {"found": False, "error": str(e)}
 
-    # ------ 公共接口 ------
+            if results[0].sxx == 1:
+                result["warning"] = "⚠️ 该法律已被废止，引用时请注意时效性"
+            elif results[0].sxx == 2:
+                result["warning"] = "⚠️ 该法律已被修改，引用时请确认最新版本"
 
-    def search(self, query: str, num_results: int = 5) -> Dict:
-        """主搜索入口，自动判断查询类型
-
-        Args:
-            query: 用户输入的查询，如:
-                - "民法典" (仅查法律)
-                - "民法典 第143条" (查具体条款)
-                - "劳动合同法 试用期" (查主题)
-        """
-        result = {
-            "query": query,
-            "results": [],
-            "articles": [],
-            "total_laws": 0,
-            "message": "",
-        }
-
-        # 1. 解析查询：是否包含法条编号？
-        law_keyword, article_num = self._parse_query(query)
-        print(f"[LawSearch] 解析: 法律名='{law_keyword}', 法条='{article_num}'")
-
-        # 2. 搜索法律（标题搜索，精准匹配）
-        search_kw = law_keyword or query
-
-        # 法律全称映射（优先搜索全称）
-        full_name_map = {
-            "民法典": "中华人民共和国民法典",
-            "民法总则": "中华人民共和国民法总则",
-            "刑法": "中华人民共和国刑法",
-            "刑事诉讼法": "中华人民共和国刑事诉讼法",
-            "民事诉讼法": "中华人民共和国民事诉讼法",
-            "行政诉讼法": "中华人民共和国行政诉讼法",
-            "劳动合同法": "中华人民共和国劳动合同法",
-            "劳动法": "中华人民共和国劳动法",
-            "公司法": "中华人民共和国公司法",
-            "合同法": "中华人民共和国合同法",
-            "婚姻法": "中华人民共和国婚姻法",
-            "继承法": "中华人民共和国继承法",
-            "专利法": "中华人民共和国专利法",
-            "商标法": "中华人民共和国商标法",
-            "著作权法": "中华人民共和国著作权法",
-            "土地管理法": "中华人民共和国土地管理法",
-            "消费者权益保护法": "中华人民共和国消费者权益保护法",
-            "食品安全法": "中华人民共和国食品安全法",
-            "环境保护法": "中华人民共和国环境保护法",
-            "道路交通安全法": "中华人民共和国道路交通安全法",
-            "宪法": "中华人民共和国宪法",
-            "个人所得税法": "中华人民共和国个人所得税法",
-            "社会保险法": "中华人民共和国社会保险法",
-        }
-
-        full_name = full_name_map.get(search_kw, search_kw)
-
-        # 先尝试全称搜索（更精准）
-        laws, total = self.flk_client.search_laws(
-            keyword=full_name,
-            title_only=True,
-            page_size=num_results,
-        )
-
-        # 若全称搜索没有高相关结果，再用简称补充
-        if not laws and full_name != search_kw:
-            laws, total = self.flk_client.search_laws(
-                keyword=search_kw,
-                title_only=True,
-                page_size=num_results,
-            )
-
-        # 降级：标题搜索无果 -> 全文搜索
-        if not laws:
-            laws, total = self.flk_client.search_laws(
-                keyword=search_kw, title_only=False, page_size=num_results,
-            )
-
-        if not laws:
-            result["message"] = f"未找到与 '{query}' 相关的法律法规"
             return result
 
-        result["total_laws"] = total
-
-        # 3. 结果排序：优先现行有效 > 类型 > 短标题
-        laws_sorted = self._sort_laws(laws)
-        result["results"] = [l.to_dict() for l in laws_sorted[:num_results]]
-
-        # 4. 如果查询了具体条款，尝试获取条款内容
-        if article_num:
-            target_law = next((l for l in laws_sorted if l.is_valid), laws_sorted[0])
-            article = self._fetch_article_content(
-                law_name=target_law.title,
-                article_num=article_num,
-                bbbs=target_law.bbbs,
-            )
-            if article:
-                result["articles"] = [article.to_dict()]
-                result["message"] = f"已找到 {target_law.title} 第{article_num}条内容"
-            else:
-                result["message"] = f"已找到相关法律：{target_law.title}（点击链接在官网查看全文）"
-        else:
-            result["message"] = f"共找到 {total} 条相关法律，显示前 {min(num_results, len(laws_sorted))} 条"
-
-        return result
-
-    # ------ 内部方法 ------
-
-    def _parse_query(self, query: str) -> Tuple[str, Optional[str]]:
-        """解析查询，返回 (法律关键词, 法条编号)"""
-        # 常见法律名称关键词
-        law_names = [
-            "民法典", "民法总则", "民法通则", "刑法", "刑事诉讼法",
-            "民事诉讼法", "行政诉讼法", "行政复议法",
-            "劳动合同法", "劳动法", "社会保险法",
-            "公司法", "合伙企业法", "个人独资企业法",
-            "合同法", "物权法", "担保法", "侵权责任法",
-            "婚姻法", "继承法", "收养法",
-            "专利法", "商标法", "著作权法",
-            "土地管理法", "城市房地产管理法",
-            "消费者权益保护法", "食品安全法", "产品质量法",
-            "环境保护法", "道路交通安全法",
-            "宪法", "立法法",
-            "个人所得税法", "企业所得税法", "税收征收管理法",
-        ]
-
-        # 匹配最常见的法律名
-        law_keyword = None
-        for name in law_names:
-            if name in query:
-                law_keyword = name
-                break
-
-        # 匹配法条编号：第X条 / 第XX条 / 第XXX条 / 数字+条
-        article_num = None
-
-        # 优先匹配中文数字
-        m = re.search(r'第([一二三四五六七八九十百千两零〇]{1,15})条', query)
-        if m:
-            article_num = str(cn_to_arabic(m.group(1)))
-        else:
-            m = re.search(r'第\s*(\d{1,5})\s*条', query)
-            if m:
-                article_num = m.group(1)
-
-        return law_keyword, article_num
-
-    def _sort_laws(self, laws: List[LawSearchResult]) -> List[LawSearchResult]:
-        """排序：优先现行有效，再按类型（法律>行政法规>地方法规），同类型短标题优先"""
-        # 类型优先级
-        type_priority = {'法律': 0, '行政法规': 1, '部门规章': 2, '监察法规': 3, '司法解释': 4}
-
-        def _type_score(flxz: str) -> int:
-            for key, val in type_priority.items():
-                if key in flxz:
-                    return val
-            return 99
-
-        return sorted(
-            laws,
-            key=lambda l: (
-                {3: 0, 2: 1, 4: 2, 1: 3}.get(l.sxx, 99),  # 状态
-                _type_score(l.flxz),  # 法律类型
-                len(l.title),  # 短标题优先
-            )
-        )
-
-    def _fetch_article_content(
-        self, law_name: str, article_num: str, bbbs: str = ""
-    ) -> Optional[ArticleContent]:
-        """通过搜索获取具体法条内容（使用百度搜索，对中文法律内容效果更佳）"""
-        try:
-            cn_num = ""
-            try:
-                cn_num = self._arabic_to_cn(int(article_num))
-            except:
-                pass
-
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept-Language': 'zh-CN,zh;q=0.9',
+        except Exception as e:
+            return {
+                "found": False,
+                "error": f"验证请求失败: {str(e)}"
             }
 
-            # 尝试多个搜索查询
-            queries = [
-                f"{law_name} 第{article_num}条",
-                f"{law_name} 第{article_num}条 原文",
-            ]
-            if cn_num:
-                queries.insert(0, f"{law_name} 第{cn_num}条")
+    def get_tool_definition(self) -> Dict:
+        return {
+            "type": "function",
+            "function": {
+                "name": "law_search",
+                "description": (
+                    "法条搜索工具，通过国家法律法规数据库（flk.npc.gov.cn）搜索中国法律法规。"
+                    "当用户询问法律条款、法律解释、法律责任、权利义务、法律程序等问题时使用。"
+                    "返回结果包含法律的时效性状态（有效/已废止/已修改），并提供官方链接。"
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": (
+                                "搜索查询，应包含法律名称或关键词。"
+                                "例如：'民法典'、'劳动合同法 试用期'、'刑法 盗窃罪'、'消费者权益保护法'"
+                            )
+                        },
+                        "num_results": {
+                            "type": "integer",
+                            "description": "返回的搜索结果数量，默认为5",
+                            "default": 5
+                        },
+                        "verify": {
+                            "type": "boolean",
+                            "description": "是否通过国家法律法规库验证，默认为true",
+                            "default": True
+                        }
+                    },
+                    "required": ["query"]
+                }
+            }
+        }
 
-            for query in queries:
-                try:
-                    # 使用百度搜索
-                    url = f"https://www.baidu.com/s?wd={requests.utils.quote(query, encoding='utf-8')}"
-                    resp = self.flk_client.session.get(url, headers=headers, timeout=15)
-                    if resp.status_code != 200:
-                        continue
-
-                    text = resp.text
-                    # 先剥离脚本/样式
-                    text = re.sub(r'<script[\s\S]*?</script>', ' ', text, flags=re.IGNORECASE)
-                    text = re.sub(r'<style[\s\S]*?</style>', ' ', text, flags=re.IGNORECASE)
-                    text = re.sub(r'&[a-z#0-9]+;', ' ', text)
-                    text = re.sub(r'<[^>]+>', ' ', text)
-                    text = re.sub(r'\s+', ' ', text)
-
-                    if len(text) < 200:
-                        continue
-
-                    # 方法1: 找包含 "第X条" 后接 "..." 的模式 (百度精选摘要)
-                    article_markers = []
-                    if cn_num:
-                        article_markers.append(f"第{cn_num}条")
-                    article_markers.append(f"第{article_num}条")
-
-                    best_content = ""
-                    for marker in article_markers:
-                        # 在文本中找到所有 marker 的位置
-                        idx = 0
-                        while True:
-                            idx = text.find(marker, idx)
-                            if idx < 0:
-                                break
-                            # 取 marker 后的内容，直到遇到下一条 / 段落结束
-                            start = idx
-                            end = min(len(text), start + 600)
-                            fragment = text[start:end]
-                            idx = start + len(marker)
-
-                            # 清理：去掉 marker 本身，取后续内容
-                            after_marker = fragment[len(marker):].strip()
-
-                            # 过滤掉明显是UI垃圾的内容（含"搜索"、"百度"等词在前30字）
-                            if len(after_marker) < 30:
-                                continue
-                            # 检查前30字是否是垃圾
-                            leading = after_marker[:30]
-                            if any(ui in leading for ui in ['搜索', '百度', '_', 'http', 'png', 'jpg']):
-                                continue
-
-                            # 找到下一个"第X条"的位置作为边界
-                            next_article = re.search(r'第[一二三四五六七八九十百千\d]{2,8}条', after_marker[20:])
-                            if next_article:
-                                after_marker = after_marker[:20 + next_article.start()]
-
-                            # 找到最后一个句号（。）来截断，避免尾部的UI垃圾
-                            last_period = after_marker.rfind('。')
-                            if last_period > 40:
-                                after_marker = after_marker[:last_period + 1]
-
-                            # 过滤条件
-                            if (40 < len(after_marker) < 600
-                                    and not any(ui in after_marker for ui in ['换一换', '热搜榜', '百度', '点击', '页面'])
-                                    and any(term in after_marker for term in ['，', '；', '。', '：', '（一）', '（二）'])):
-                                # 优先选择更长的合法内容
-                                if len(after_marker) > len(best_content):
-                                    best_content = after_marker
-
-                    # 方法2: 找中文长句（百度AI摘要格式）
-                    if not best_content:
-                        cn_sentences = re.findall(r'[\u4e00-\u9fa5（）()《》，。；：\-、\d\s]{100,800}', text)
-                        qualified = []
-                        for s in cn_sentences:
-                            s = s.strip()
-                            if (len(s) > 80
-                                    and not any(ui in s for ui in ['换一换', '热搜榜', '百度', '搜索', '点击'])
-                                    and any(term in s for term in ['，', '。', '；'])):
-                                qualified.append(s)
-                        if qualified:
-                            # 取第一条高质量的
-                            best_content = max(qualified, key=len)
-
-                    if best_content:
-                        # 统一格式
-                        best_content = best_content.strip()
-                        best_content = re.sub(r'\s+', ' ', best_content)
-
-                        article_title = f"第{article_num}条"
-                        if cn_num:
-                            article_title = f"第{cn_num}条（第{article_num}条）"
-
-                        return ArticleContent(
-                            article_title=article_title,
-                            article_number=article_num,
-                            law_name=law_name,
-                            content=best_content,
-                            source="网络搜索（仅供参考，以官方原文为准）",
-                            confidence=0.6,
-                        )
-
-                except Exception as inner_e:
-                    print(f"[LawSearch] 搜索 '{query}' 失败: {inner_e}")
-                    continue
-
-            return None
-
-        except Exception as e:
-            print(f"[LawSearch] 获取法条内容失败: {e}")
-            return None
-
-    def _arabic_to_cn(self, num: int) -> str:
-        """阿拉伯数字转中文数字（简化，用于 1-9999）"""
-        if num == 0:
-            return "零"
-        digits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九']
-        units = ['', '十', '百', '千']
-        parts = []
-        # 处理万以上
-        if num >= 10000:
-            wan = num // 10000
-            rest = num % 10000
-            return self._arabic_to_cn(wan) + "万" + (self._arabic_to_cn(rest) if rest else "")
-        # 处理千以内
-        s = str(num)
-        result = ""
-        n = len(s)
-        for i, ch in enumerate(s):
-            digit = int(ch)
-            unit_idx = n - i - 1
-            if digit == 0:
-                if result and not result.endswith('零'):
-                    result += '零'
-            else:
-                result += digits[digit] + units[unit_idx]
-        return result.rstrip('零')
-
-
-# ------ 全局单例 ------
 
 law_search_tool = LawSearchTool()
-
-
-# ------ 便捷函数 ------
-
-def search_law(query: str, num_results: int = 5) -> Dict:
-    return law_search_tool.search(query, num_results)
-
-
-def get_suggestions(query: str) -> List[str]:
-    return law_search_tool.flk_client.search_suggest(query)

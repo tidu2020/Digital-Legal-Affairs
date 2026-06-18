@@ -88,20 +88,52 @@
             background: rgba(255,255,255,0.25);
         }
 
-        .danger-btn {
-            background: rgba(229,62,62,0.2);
-            border-color: rgba(255,255,255,0.3);
-        }
-
-        .danger-btn:hover {
-            background: rgba(229,62,62,0.35) !important;
-        }
-
         /* 主内容区 */
         .main-container {
             display: flex;
             flex: 1;
             overflow: hidden;
+        }
+
+        /* 清空历史按钮样式 */
+        .clear-all-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            border: none;
+            border-radius: 8px;
+            background-color: #fee2e2;
+            color: #dc2626;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .clear-all-btn:hover {
+            background-color: #fecaca;
+        }
+
+        /* 删除会话按钮样式 */
+        .delete-session-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 16px;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.2s;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .session-item:hover .delete-session-btn {
+            opacity: 1;
+        }
+        .delete-session-btn:hover {
+            background-color: #fee2e2;
+            color: #dc2626;
         }
 
         /* 侧边栏 */
@@ -139,29 +171,6 @@
             background: var(--secondary-color);
         }
 
-        .clear-all-btn {
-            width: 100%;
-            margin-top: 8px;
-            background: rgba(229,62,62,0.08);
-            color: #e53e3e;
-            border: 1px solid rgba(229,62,62,0.2);
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: all 0.2s;
-        }
-
-        .clear-all-btn:hover {
-            background: rgba(229,62,62,0.15);
-            border-color: rgba(229,62,62,0.4);
-        }
-
         .sessions-list {
             flex: 1;
             overflow-y: auto;
@@ -169,42 +178,14 @@
         }
 
         .session-item {
-            padding: 10px 12px;
+            padding: 12px;
             border-radius: 8px;
             cursor: pointer;
             margin-bottom: 4px;
             transition: background 0.2s;
             display: flex;
             align-items: center;
-            justify-content: space-between;
             gap: 8px;
-        }
-
-        .session-left {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex: 1;
-            min-width: 0;
-        }
-
-        .session-delete {
-            display: none;
-            font-size: 12px;
-            color: #a0aec0;
-            padding: 2px 6px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.15s;
-        }
-
-        .session-item:hover .session-delete {
-            display: inline-block;
-        }
-
-        .session-delete:hover {
-            background: rgba(229,62,62,0.12);
-            color: #e53e3e;
         }
 
         .session-item:hover {
@@ -217,7 +198,6 @@
 
         .session-icon {
             font-size: 16px;
-            flex-shrink: 0;
         }
 
         .session-title {
@@ -287,16 +267,15 @@
             flex: 1;
             overflow-y: auto;
             padding: 24px;
-            scroll-behavior: smooth;
         }
 
         .message {
-            max-width: 820px;
-            margin: 0 auto 20px;
-            animation: msgSlide 0.3s ease;
+            max-width: 800px;
+            margin: 0 auto 24px;
+            animation: fadeIn 0.3s ease;
         }
 
-        @keyframes msgSlide {
+        @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
@@ -316,7 +295,6 @@
             align-items: center;
             justify-content: center;
             font-size: 14px;
-            flex-shrink: 0;
         }
 
         .user-avatar {
@@ -325,39 +303,36 @@
         }
 
         .assistant-avatar {
-            background: linear-gradient(135deg, #2f5597, #3e6dc7);
+            background: var(--success-color);
             color: white;
         }
 
         .message-role {
-            font-weight: 600;
+            font-weight: 500;
             font-size: 14px;
         }
 
         .message-content {
             background: var(--card-bg);
-            border-radius: 14px;
-            padding: 16px 20px;
-            line-height: 1.75;
-            box-shadow: 0 1px 4px rgba(47,85,151,0.06), 0 1px 2px rgba(0,0,0,0.04);
-            border: 1px solid rgba(47,85,151,0.05);
+            border-radius: 12px;
+            padding: 16px;
+            line-height: 1.7;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .user-message .message-content {
             background: var(--user-msg-bg);
-            border: 1px solid rgba(47,85,151,0.08);
         }
 
         .assistant-message .message-content {
             background: var(--assistant-msg-bg);
-            border: 1px solid rgba(34,197,94,0.08);
         }
 
         .message-content pre {
             background: #1a202c;
             color: #e2e8f0;
             padding: 16px;
-            border-radius: 10px;
+            border-radius: 8px;
             overflow-x: auto;
             margin: 12px 0;
             font-size: 13px;
@@ -524,156 +499,122 @@
 
         /* 欢迎页 */
         .welcome-page {
-            max-width: 900px;
-            margin: 40px auto;
+            max-width: 700px;
+            margin: 60px auto;
             text-align: center;
-            padding: 40px 32px;
-            animation: fadeIn 0.4s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            padding: 40px;
         }
 
         .welcome-icon {
-            font-size: 56px;
-            margin-bottom: 20px;
-            filter: drop-shadow(0 4px 12px rgba(47,85,151,0.15));
+            font-size: 64px;
+            margin-bottom: 24px;
         }
 
         .welcome-title {
-            font-size: 32px;
+            font-size: 28px;
             color: var(--primary-color);
-            margin-bottom: 12px;
-            font-weight: 700;
+            margin-bottom: 16px;
         }
 
         .welcome-desc {
-            font-size: 15px;
+            font-size: 16px;
             color: var(--text-secondary);
             line-height: 1.8;
-            margin-bottom: 36px;
-            max-width: 560px;
-            margin-left: auto;
-            margin-right: auto;
+            margin-bottom: 32px;
         }
 
         .capabilities {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 14px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
             text-align: left;
         }
 
         .capability-item {
             background: var(--card-bg);
-            padding: 18px;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(47,85,151,0.06), 0 1px 2px rgba(0,0,0,0.04);
-            transition: all 0.2s ease;
-            border: 1px solid rgba(47,85,151,0.08);
-        }
-
-        .capability-item:hover {
-            box-shadow: 0 8px 24px rgba(47,85,151,0.12), 0 2px 6px rgba(0,0,0,0.04);
-            transform: translateY(-2px);
-            border-color: rgba(47,85,151,0.2);
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .capability-icon {
-            font-size: 22px;
-            margin-bottom: 10px;
-            display: inline-block;
-            padding: 6px;
-            background: rgba(47,85,151,0.08);
-            border-radius: 8px;
+            font-size: 24px;
+            margin-bottom: 8px;
         }
 
         .capability-title {
             font-weight: 600;
-            margin-bottom: 6px;
-            color: var(--primary-color);
-            font-size: 14px;
+            margin-bottom: 4px;
         }
 
         .capability-desc {
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-secondary);
-            line-height: 1.6;
         }
 
         /* 输入区 */
         .input-container {
-            padding: 16px 24px 20px;
+            padding: 16px 24px 24px;
             background: var(--card-bg);
             border-top: 1px solid var(--border-color);
         }
 
         .input-wrapper {
-            max-width: 820px;
+            max-width: 800px;
             margin: 0 auto;
             position: relative;
         }
 
         .chat-input {
             width: 100%;
-            padding: 14px 60px 14px 18px;
-            border: 1.5px solid #d1d9e6;
-            border-radius: 14px;
+            padding: 16px 60px 16px 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
             font-size: 15px;
             line-height: 1.5;
             resize: none;
-            min-height: 52px;
+            min-height: 56px;
             max-height: 200px;
             font-family: inherit;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 3px rgba(47,85,151,0.05);
-            background: white;
+            transition: border-color 0.2s;
         }
 
         .chat-input:focus {
             outline: none;
             border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(47,85,151,0.08), 0 2px 8px rgba(47,85,151,0.1);
         }
 
         .send-btn {
             position: absolute;
             right: 8px;
             bottom: 8px;
-            width: 38px;
-            height: 38px;
+            width: 40px;
+            height: 40px;
             background: var(--accent-color);
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 6px rgba(47,85,151,0.25);
+            transition: background 0.2s;
         }
 
         .send-btn:hover:not(:disabled) {
             background: var(--secondary-color);
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(47,85,151,0.35);
         }
 
         .send-btn:disabled {
-            background: #cbd5e0;
+            background: #a0aec0;
             cursor: not-allowed;
-            box-shadow: none;
         }
 
         .input-hint {
-            font-size: 11px;
+            font-size: 12px;
             color: var(--text-secondary);
             margin-top: 8px;
             text-align: center;
-            opacity: 0.8;
         }
 
         /* 加载动画 */
@@ -719,17 +660,10 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(15,23,42,0.55);
-            backdrop-filter: blur(4px);
+            background: rgba(0,0,0,0.5);
             z-index: 1000;
             align-items: center;
             justify-content: center;
-            animation: modalFade 0.2s ease;
-        }
-
-        @keyframes modalFade {
-            from { opacity: 0; }
-            to { opacity: 1; }
         }
 
         .modal.active {
@@ -738,56 +672,36 @@
 
         .modal-content {
             background: var(--card-bg);
-            border-radius: 16px;
+            border-radius: 12px;
             padding: 24px;
-            max-width: 520px;
+            max-width: 500px;
             width: 90%;
             max-height: 80vh;
             overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(15,23,42,0.25), 0 10px 20px rgba(15,23,42,0.1);
-            animation: modalSlide 0.25s ease;
-        }
-
-        @keyframes modalSlide {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
         }
 
         .modal-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 18px;
+            margin-bottom: 16px;
         }
 
         .modal-title {
             font-size: 18px;
             font-weight: 600;
-            color: var(--primary-color);
         }
 
         .modal-close {
             background: none;
             border: none;
-            font-size: 22px;
+            font-size: 24px;
             cursor: pointer;
             color: var(--text-secondary);
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.15s;
-        }
-
-        .modal-close:hover {
-            background: rgba(15,23,42,0.06);
-            color: var(--text-primary);
         }
 
         .modal-body {
-            color: var(--text-primary);
+            color: var(--text-secondary);
             font-size: 14px;
             line-height: 1.6;
         }
@@ -844,116 +758,10 @@
             .sidebar {
                 display: none;
             }
-
+            
             .capabilities {
                 grid-template-columns: 1fr;
             }
-        }
-
-        /* 置信度标注 */
-        .confidence-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            margin-left: 8px;
-            cursor: help;
-        }
-        .confidence-high {
-            background: #f0fff4;
-            color: #22543d;
-            border: 1px solid #c6f6d5;
-        }
-        .confidence-medium {
-            background: #fffaf0;
-            color: #744210;
-            border: 1px solid #faf089;
-        }
-        .confidence-low {
-            background: #fff5f5;
-            color: #c53030;
-            border: 1px solid #fed7d7;
-        }
-
-        /* 风险等级容器边框 */
-        .risk-high {
-            border-left: 4px solid #e53e3e !important;
-            background: #fff5f5 !important;
-        }
-        .risk-medium {
-            border-left: 4px solid #dd6b20 !important;
-            background: #fffaf0 !important;
-        }
-        .risk-low {
-            border-left: 4px solid #38a169 !important;
-            background: #f0fff4 !important;
-        }
-
-        /* 风险等级标签 */
-        .risk-tag {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-right: 4px;
-        }
-        .risk-tag-high {
-            background: #fed7d7;
-            color: #c53030;
-        }
-        .risk-tag-medium {
-            background: #feebc8;
-            color: #c05621;
-        }
-        .risk-tag-low {
-            background: #c6f6d5;
-            color: #276749;
-        }
-
-        /* 结构化报告面板 */
-        .structured-report {
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            margin: 12px 0;
-            overflow: hidden;
-        }
-        .report-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            background: #f7fafc;
-            border-bottom: 1px solid var(--border-color);
-            cursor: pointer;
-            user-select: none;
-        }
-        .report-header:hover {
-            background: #edf2f7;
-        }
-        .report-title {
-            font-weight: 600;
-            font-size: 14px;
-            color: var(--text-primary);
-        }
-        .report-toggle {
-            font-size: 12px;
-            color: var(--text-secondary);
-            transition: transform 0.2s;
-        }
-        .report-toggle.collapsed {
-            transform: rotate(-90deg);
-        }
-        .report-body {
-            padding: 16px;
-            transition: max-height 0.3s ease;
-        }
-        .report-body.collapsed {
-            max-height: 0 !important;
-            padding: 0 16px;
-            overflow: hidden;
         }
     </style>
 </head>
@@ -965,9 +773,7 @@
             <h1>国企法务助手</h1>
         </div>
         <div class="header-right">
-            <button class="header-btn" onclick="showLawSearchModal()">🔍 法条检索</button>
             <button class="header-btn" onclick="showKnowledgeModal()">📚 知识库</button>
-            <button class="header-btn danger-btn" onclick="clearCurrentSession()" title="清空当前对话">🗑️ 清空当前</button>
             <button class="header-btn" onclick="showHelpModal()">❓ 帮助</button>
         </div>
     </header>
@@ -980,8 +786,8 @@
                 <button class="new-chat-btn" onclick="createNewChat()">
                     ➕ 新建对话
                 </button>
-                <button class="clear-all-btn" onclick="clearAllSessions()">
-                    🗑️ 清空全部历史
+                <button class="new-chat-btn clear-all-btn" onclick="clearAllSessions()" title="清空所有历史对话">
+                    🗑️ 清空历史
                 </button>
             </div>
             
@@ -1014,34 +820,29 @@
                     </p>
                     <div class="capabilities">
                         <div class="capability-item">
-                            <div class="capability-icon">📜</div>
-                            <div class="capability-title">制度法律审核</div>
-                            <div class="capability-desc">合法性、合规性、风险可控性、体系兼容性四维审查</div>
+                            <div class="capability-icon">💬</div>
+                            <div class="capability-title">法务合规咨询</div>
+                            <div class="capability-desc">规章制度合法性、合规性、风险可控性审核</div>
                         </div>
                         <div class="capability-item">
                             <div class="capability-icon">📝</div>
-                            <div class="capability-title">合同审核</div>
-                            <div class="capability-desc">法务+商务双视角审查，四维法律分析+三维商业分析</div>
+                            <div class="capability-title">合同管理咨询</div>
+                            <div class="capability-desc">合同全生命周期管理流程和风险提示</div>
                         </div>
                         <div class="capability-item">
-                            <div class="capability-icon">⚖️</div>
-                            <div class="capability-title">诉讼案件管理</div>
-                            <div class="capability-desc">案件分类、时限管理、重大案件标准、五维案件分析</div>
+                            <div class="capability-icon">📋</div>
+                            <div class="capability-title">附件处理</div>
+                            <div class="capability-desc">上传文档作为附件，支持审核、整理、参考写作等多种指令</div>
                         </div>
                         <div class="capability-item">
                             <div class="capability-icon">🛡️</div>
-                            <div class="capability-title">合规管理体系</div>
-                            <div class="capability-desc">四位一体合规体系、三张清单机制、九大重点领域</div>
+                            <div class="capability-title">合规管理体系咨询</div>
+                            <div class="capability-desc">解读"四位一体"合规体系建设要点</div>
                         </div>
                         <div class="capability-item">
-                            <div class="capability-icon">✍️</div>
-                            <div class="capability-title">法务公文写作</div>
-                            <div class="capability-desc">7类国企法务公文标准模板起草</div>
-                        </div>
-                        <div class="capability-item">
-                            <div class="capability-icon">🔍</div>
+                            <div class="capability-icon">⚖️</div>
                             <div class="capability-title">法条检索与校验</div>
-                            <div class="capability-desc">对接国家法律法规数据库，三维法条校验+逐条核验</div>
+                            <div class="capability-desc">对接国家法律法规数据库，法条时效性自动验证</div>
                         </div>
                     </div>
                 </div>
@@ -1054,7 +855,7 @@
                     <textarea 
                         class="chat-input" 
                         id="chatInput" 
-                        placeholder="请输入法务合规问题，如：请审核这份合同..."
+                        placeholder="请输入您的法务合规问题..."
                         rows="1"
                         onkeydown="handleKeyDown(event)"
                         oninput="autoResize(this)"
@@ -1089,33 +890,6 @@
         </div>
     </div>
 
-    <div class="modal" id="lawSearchModal">
-        <div class="modal-content" style="max-width: 640px; max-height: 85vh;">
-            <div class="modal-header">
-                <h3 class="modal-title">🔍 法条检索</h3>
-                <button class="modal-close" onclick="closeModal('lawSearchModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div style="display:flex; gap:8px; margin-bottom:12px;">
-                    <input type="text" id="lawSearchInput" placeholder="如：民法典、劳动合同法、民法典 第143条..."
-                        style="flex:1; padding:10px 14px; border:1.5px solid #d1d9e6; border-radius:10px; font-size:14px; outline:none; transition:all 0.2s; background:white;"
-                        onfocus="this.style.borderColor='var(--accent-color)';this.style.boxShadow='0 0 0 3px rgba(47,85,151,0.08)'" onblur="this.style.borderColor='#d1d9e6';this.style.boxShadow='none'"
-                        onkeydown="if(event.key==='Enter'){searchLaw()}">
-                    <button onclick="searchLaw()" style="padding:10px 24px; background:var(--accent-color); color:white; border:none; border-radius:10px; cursor:pointer; font-size:14px; font-weight:500; transition:all 0.2s; white-space:nowrap;"
-                        onmouseover="this.style.background='var(--secondary-color)'" onmouseout="this.style.background='var(--accent-color)'"
-                        id="lawSearchBtn">搜索</button>
-                </div>
-                <div id="lawSearchSuggestions" style="margin-bottom:12px; font-size:12px; color:#718096;"></div>
-                <div id="lawSearchResults" style="min-height:80px; overflow-y:auto; max-height: calc(85vh - 180px);">
-                    <div style="text-align:center; color:#a0aec0; padding:30px 0; font-size:14px; line-height:1.8;">
-                        🔍 输入法律名称搜索<br>
-                        <span style="font-size:12px; color:#a0aec0;">可搜索："民法典"、"劳动合同法"、"民法典 第143条" 等</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="modal" id="helpModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1123,23 +897,18 @@
                 <button class="modal-close" onclick="closeModal('helpModal')">&times;</button>
             </div>
             <div class="modal-body">
-                <h4>五大技能板块</h4>
-                <ul style="margin: 12px 0 16px; padding-left: 20px; line-height: 2;">
-                    <li>📜 <strong>制度法律审核</strong>：合法性、合规性、风险可控性、体系兼容性四维审查<br><span style="color:#718096; font-size:12px;">示例："请审核这份规章制度是否合法合规"</span></li>
-                    <li>📝 <strong>合同审核</strong>：法务+商务双视角审查，四维法律分析+三维商业分析<br><span style="color:#718096; font-size:12px;">示例："请从法务和商务双视角审核这份合同"</span></li>
-                    <li>⚖️ <strong>诉讼案件管理</strong>：案件分类、时限管理、重大案件标准、五维案件分析<br><span style="color:#718096; font-size:12px;">示例："收到应诉通知书后应在几天内处理"</span></li>
-                    <li>🛡️ <strong>合规管理体系</strong>：四位一体合规体系、三张清单机制、九大重点领域<br><span style="color:#718096; font-size:12px;">示例："四位一体合规体系包括哪些内容"</span></li>
-                    <li>✍️ <strong>法务公文写作</strong>：7类国企法务公文标准模板起草<br><span style="color:#718096; font-size:12px;">示例："帮我起草一份法治工作总结"</span></li>
-                </ul>
-                <h4>🔍 法条检索与校验</h4>
-                <ul style="margin: 12px 0 16px; padding-left: 20px; line-height: 1.8;">
-                    <li>对接国家法律法规数据库，三维法条校验+逐条核验<br><span style="color:#718096; font-size:12px;">示例："民法典第143条规定了什么"</span></li>
-                    <li>点击头部"🔍 法条检索"按钮可独立搜索法条</li>
-                </ul>
-                <h4>其他功能</h4>
-                <ul style="margin: 12px 0; padding-left: 20px; line-height: 1.8;">
+                <h4>功能说明</h4>
+                <ul style="margin: 12px 0 16px; padding-left: 20px;">
                     <li>💬 多轮对话：支持与AI进行连续对话</li>
-                    <li>📋 文档附件：上传文档进行法务合规审核</li>
+                    <li>📋 文档审核：上传文档进行法务合规审核</li>
+                    <li>⚖️ 法条检索：自动对接国家法律法规数据库，验证法条时效性</li>
+                </ul>
+                <h4>示例问题</h4>
+                <ul style="margin: 12px 0; padding-left: 20px;">
+                    <li>"三个100%具体指什么？"</li>
+                    <li>"合同审核的流程是什么？"</li>
+                    <li>"帮我起草一份法治工作总结"</li>
+                    <li>"民法典第1条规定了什么？"</li>
                     <li>上传附件后："请审核这份合同"、"整理成摘要"、"参考这个写个新方案"</li>
                 </ul>
                 <p style="color: #718096; font-size: 12px; margin-top: 16px;">
@@ -1188,12 +957,10 @@
             }
             
             container.innerHTML = sessions.map(s => `
-                <div class="session-item ${s.id === currentSessionId ? 'active' : ''}">
-                    <span class="session-left" onclick="loadSession('${s.id}')">
-                        <span class="session-icon">💬</span>
-                        <span class="session-title">${s.title || '新对话'}</span>
-                    </span>
-                    <span class="session-delete" onclick="event.stopPropagation(); deleteSession('${s.id}')" title="删除此会话">✕</span>
+                <div class="session-item ${s.id === currentSessionId ? 'active' : ''}" onclick="loadSession('${s.id}')">
+                    <span class="session-icon">💬</span>
+                    <span class="session-title">${s.title || '新对话'}</span>
+                    <button class="delete-session-btn" onclick="event.stopPropagation(); deleteSession('${s.id}')" title="删除此对话">×</button>
                 </div>
             `).join('');
         }
@@ -1225,85 +992,6 @@
                 renderMessages();
                 loadSessions();
             }
-        }
-
-        // 清空当前对话（保留会话，但清空消息）
-        function clearCurrentSession() {
-            if (!messages || messages.length === 0) {
-                alert('当前对话为空，无需清空。');
-                return;
-            }
-            if (!confirm('确认清空当前对话的所有消息吗？此操作不可恢复。')) return;
-
-            const sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
-            const idx = sessions.findIndex(s => s.id === currentSessionId);
-            if (idx >= 0) {
-                sessions[idx].messages = [];
-                sessions[idx].title = '新对话';
-                localStorage.setItem('chatSessions', JSON.stringify(sessions));
-            }
-            messages = [];
-            // 回到欢迎页
-            const welcomePage = document.getElementById('welcomePage');
-            if (welcomePage) {
-                const html = welcomePage.outerHTML;
-                document.getElementById('chatMessages').innerHTML = html;
-                document.getElementById('welcomePage').style.display = 'block';
-            } else {
-                document.getElementById('chatMessages').innerHTML = '';
-            }
-            loadSessions();
-        }
-
-        // 删除单个会话
-        function deleteSession(sessionId) {
-            if (!confirm('确认删除此对话？此操作不可恢复。')) return;
-            let sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
-            sessions = sessions.filter(s => s.id !== sessionId);
-            localStorage.setItem('chatSessions', JSON.stringify(sessions));
-
-            if (currentSessionId === sessionId) {
-                // 被删的是当前会话，切换到第一个会话或创建新的
-                if (sessions.length > 0) {
-                    loadSession(sessions[0].id);
-                } else {
-                    currentSessionId = null;
-                    messages = [];
-                    const welcomePage = document.getElementById('welcomePage');
-                    if (welcomePage) {
-                        document.getElementById('chatMessages').innerHTML = welcomePage.outerHTML;
-                        document.getElementById('welcomePage').style.display = 'block';
-                    } else {
-                        document.getElementById('chatMessages').innerHTML = '';
-                    }
-                    loadSessions();
-                }
-            } else {
-                loadSessions();
-            }
-        }
-
-        // 清空全部历史对话
-        function clearAllSessions() {
-            const sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
-            if (sessions.length === 0) {
-                alert('暂无历史对话。');
-                return;
-            }
-            if (!confirm(`确认清空全部 ${sessions.length} 条历史对话吗？此操作不可恢复。`)) return;
-
-            localStorage.removeItem('chatSessions');
-            currentSessionId = null;
-            messages = [];
-
-            const welcomePage = document.getElementById('welcomePage');
-            if (welcomePage) {
-                document.getElementById('chatMessages').innerHTML = welcomePage.outerHTML;
-                document.getElementById('welcomePage').style.display = 'block';
-            } else {
-                document.getElementById('chatMessages').innerHTML = '';
-            }
-            loadSessions();
         }
 
         // 渲染法条校验报告面板
@@ -1415,7 +1103,6 @@
                             ${msg.role === 'user' ? '👤' : '🤖'}
                         </div>
                         <span class="message-role">${msg.role === 'user' ? '您' : 'AI助手'}</span>
-                        ${msg.confidence ? `<span class="confidence-badge confidence-${msg.confidence.level.toLowerCase()}" title="${msg.confidence.reason}${msg.confidence.source ? ' | 来源：' + msg.confidence.source : ''}">${msg.confidence.icon} ${msg.confidence.label}</span>` : ''}
                         ${msg.law_verification && msg.law_verification.searched ? '<span style="font-size:11px;color:#38a169;margin-left:8px;">⚖️ 法条已校验</span>' : ''}
                     </div>
                     <div class="message-content">
@@ -1437,9 +1124,6 @@
             `).join('');
             
             container.scrollTop = container.scrollHeight;
-            
-            // 初始化结构化报告面板的折叠/展开
-            setTimeout(() => initReportPanels(), 0);
         }
 
         // 格式化内容（处理代码块等）
@@ -1461,69 +1145,7 @@
             // 处理换行
             formatted = formatted.replace(/\n/g, '<br>');
             
-            // 包裹结构化报告
-            formatted = wrapStructuredReports(formatted);
-            
             return formatted;
-        }
-
-        // 将结构化报告章节包裹在可折叠面板中
-        function wrapStructuredReports(html) {
-            const reportTypes = ['合同风险审核报告', '制度审核报告', '合规审查报告'];
-            let result = html;
-            for (const type of reportTypes) {
-                const marker = '## ' + type;
-                if (result.includes(marker)) {
-                    // 找到该章节并包裹
-                    const startIdx = result.indexOf(marker);
-                    const nextH2 = result.indexOf('<br>## ', startIdx + marker.length);
-                    const endIdx = nextH2 > 0 ? nextH2 : result.length;
-                    
-                    const before = result.substring(0, startIdx);
-                    const section = result.substring(startIdx, endIdx);
-                    const after = result.substring(endIdx);
-                    
-                    const wrapped = before + 
-                        '<div class="structured-report">' +
-                        '<div class="report-header">' +
-                        '<span class="report-title">' + type + '</span>' +
-                        '<span class="report-toggle">▼</span>' +
-                        '</div>' +
-                        '<div class="report-body">' + section + '</div>' +
-                        '</div>' + after;
-                    result = wrapped;
-                }
-            }
-            return result;
-        }
-
-        // 初始化结构化报告面板的折叠/展开
-        function initReportPanels() {
-            document.querySelectorAll('.structured-report').forEach(panel => {
-                const header = panel.querySelector('.report-header');
-                const body = panel.querySelector('.report-body');
-                if (!header || !body) return;
-                
-                // 存储原始高度用于折叠动画
-                if (!body.dataset.originalHeight) {
-                    body.dataset.originalHeight = body.scrollHeight + 'px';
-                    body.style.maxHeight = body.dataset.originalHeight;
-                }
-                
-                header.onclick = function() {
-                    const toggle = header.querySelector('.report-toggle');
-                    const isCollapsed = body.classList.contains('collapsed');
-                    if (isCollapsed) {
-                        body.classList.remove('collapsed');
-                        body.style.maxHeight = body.dataset.originalHeight;
-                        toggle.classList.remove('collapsed');
-                    } else {
-                        body.classList.add('collapsed');
-                        body.style.maxHeight = '0';
-                        toggle.classList.add('collapsed');
-                    }
-                };
-            });
         }
 
         // 处理键盘事件
@@ -1695,17 +1317,9 @@
                         </div>
                     `;
                     document.getElementById('chatMessages').appendChild(msgElement);
-
+                    
                     const container = document.getElementById('chatMessages');
-
-                    // 思考超时提示：如果3秒后仍未收到content，显示思考提示
-                    let thinkingTimeout = setTimeout(() => {
-                        const responseEl = document.getElementById('currentResponse');
-                        if (responseEl && !fullResponse) {
-                            responseEl.innerHTML = '<div style="display:flex; align-items:center; gap:8px; padding:8px 0;"><span style="font-size:18px;">🤔</span><span style="color:#4a5568; font-size:14px; font-style:italic;">AI正在深度思考...</span></div>';
-                        }
-                    }, 3000);
-
+                    
                     try {
                         while (true) {
                             const { done, value } = await reader.read();
@@ -1741,33 +1355,18 @@
                                             }
                                             continue;
                                         }
-                                        if (data.reasoning_content) {
-                                            console.log('[Chat] 收到reasoning_content（深度思考中）');
-                                            const responseEl = document.getElementById('currentResponse');
-                                            if (responseEl && !fullResponse) {
-                                                responseEl.innerHTML = '<div style="display:flex; align-items:center; gap:8px; padding:8px 0;"><span style="font-size:18px;">🤔</span><span style="color:#4a5568; font-size:14px; font-style:italic;">AI正在深度思考...</span></div>';
-                                            }
-                                            continue;
-                                        }
                                         if (data.validation_report) {
                                             console.log('[Chat] 法条校验报告:', data.validation_report.summary);
                                             assistantMsg.law_validation_report = data.validation_report;
                                             continue;
                                         }
-                                        if (data.confidence) {
-                                            console.log('[Chat] 置信度:', data.confidence.level, data.confidence.label);
-                                            assistantMsg.confidence = data.confidence;
-                                            continue;
-                                        }
                                         if (data.hasOwnProperty('content') && data.content) {
                                             console.log(`[Chat] 收到content: "${data.content.substring(0, 100)}"`);
-                                            clearTimeout(thinkingTimeout);
                                             fullResponse += data.content;
                                             assistantMsg.content = fullResponse;
                                             const responseEl = document.getElementById('currentResponse');
                                             if (responseEl) {
                                                 responseEl.innerHTML = formatContent(fullResponse);
-                                                initReportPanels();
                                             }
                                             container.scrollTop = container.scrollHeight;
                                         }
@@ -1779,10 +1378,7 @@
                         }
                     } catch (readError) {
                         console.error('[Chat] 流式读取错误:', readError);
-                        clearTimeout(thinkingTimeout);
                     }
-
-                    clearTimeout(thinkingTimeout);
                     
                     console.log('[Chat] 流式回复完成, 总长度:', fullResponse.length);
                     console.log('[Chat] 完整回复内容:', fullResponse);
@@ -1795,8 +1391,8 @@
                         }
                     }
 
-                    // 流式完成后重新渲染，显示校验报告和置信度标注
-                    if (assistantMsg.law_validation_report || assistantMsg.confidence) {
+                    // 流式完成后重新渲染，显示校验报告
+                    if (assistantMsg.law_validation_report) {
                         renderMessages();
                     }
                 } else {
@@ -1813,8 +1409,7 @@
                         content: fullResponse,
                         sources: result.sources || [],
                         law_verification: result.law_verification || null,
-                        law_validation_report: result.law_validation_report || null,
-                        confidence: result.confidence || null
+                        law_validation_report: result.law_validation_report || null
                     };
                     messages.push(assistantMsg);
                     
@@ -1869,6 +1464,41 @@
                 sessions[idx].messages = messages;
                 localStorage.setItem('chatSessions', JSON.stringify(sessions));
             }
+        }
+
+        // 删除单个会话
+        function deleteSession(sessionId) {
+            if (!confirm('确定要删除这条对话吗？')) {
+                return;
+            }
+            
+            let sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
+            sessions = sessions.filter(s => s.id !== sessionId);
+            localStorage.setItem('chatSessions', JSON.stringify(sessions));
+            
+            // 如果删除的是当前会话，切换到新对话
+            if (sessionId === currentSessionId) {
+                createNewChat();
+            } else {
+                loadSessions();
+            }
+        }
+
+        // 清空所有历史会话
+        function clearAllSessions() {
+            const sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
+            if (sessions.length === 0) {
+                alert('没有可以清空的历史对话');
+                return;
+            }
+            
+            if (!confirm(`确定要清空所有 ${sessions.length} 条历史对话吗？\n此操作不可恢复！`)) {
+                return;
+            }
+            
+            localStorage.removeItem('chatSessions');
+            createNewChat();
+            alert('所有历史对话已清空');
         }
 
         // 初始化上传区域
@@ -2019,145 +1649,6 @@
                 }
             });
         });
-
-        // 显示法条检索模态框
-        function showLawSearchModal() {
-            document.getElementById('lawSearchModal').classList.add('active');
-            document.getElementById('lawSearchInput').value = '';
-            document.getElementById('lawSearchResults').innerHTML = '<div style="text-align:center; color:#a0aec0; padding:24px 0; font-size:14px;">输入关键词搜索国家法律法规数据库</div>';
-            document.getElementById('lawSearchSuggestions').innerHTML = '';
-            setTimeout(() => document.getElementById('lawSearchInput').focus(), 100);
-        }
-
-        // 法条搜索建议
-        let suggestTimer = null;
-        document.addEventListener('DOMContentLoaded', () => {
-            const lawInput = document.getElementById('lawSearchInput');
-            if (lawInput) {
-                lawInput.addEventListener('input', () => {
-                    clearTimeout(suggestTimer);
-                    const query = lawInput.value.trim();
-                    if (query.length < 2) {
-                        document.getElementById('lawSearchSuggestions').innerHTML = '';
-                        return;
-                    }
-                    suggestTimer = setTimeout(() => fetchLawSuggestions(query), 400);
-                });
-            }
-        });
-
-        async function fetchLawSuggestions(query) {
-            try {
-                const resp = await fetch(`${API_BASE}/api/law/suggest?title=${encodeURIComponent(query)}`);
-                if (!resp.ok) return;
-                const data = await resp.json();
-                const suggestions = data.suggestions || data || [];
-                if (!Array.isArray(suggestions) || suggestions.length === 0) {
-                    document.getElementById('lawSearchSuggestions').innerHTML = '';
-                    return;
-                }
-                document.getElementById('lawSearchSuggestions').innerHTML =
-                    '<div style="font-size:12px; color:#718096; margin-bottom:6px;">搜索建议：</div>' +
-                    suggestions.map(s => {
-                        const title = typeof s === 'string' ? s : (s.title || s.name || '');
-                        return '<span style="display:inline-block; background:#edf2f7; padding:4px 10px; border-radius:12px; font-size:12px; margin:2px 4px 2px 0; cursor:pointer; transition:background 0.2s;" onclick="document.getElementById(\'lawSearchInput\').value=\'' + escapeHtml(title).replace(/'/g, "\\'") + '\'; searchLaw();" onmouseover="this.style.background=\'#e2e8f0\'" onmouseout="this.style.background=\'#edf2f7\'">' + escapeHtml(title) + '</span>';
-                    }).join('');
-            } catch (e) {
-                // 静默失败
-            }
-        }
-
-        // 法条搜索
-        async function searchLaw() {
-            const query = document.getElementById('lawSearchInput').value.trim();
-            if (!query) return;
-
-            const resultsEl = document.getElementById('lawSearchResults');
-            resultsEl.innerHTML = '<div style="text-align:center; padding:30px 0;"><div style="width:28px;height:28px;border:3px solid #e2e8f0;border-top:3px solid #2f5597;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 8px;"></div><div style="color:#4a5568;font-size:14px;">正在搜索...</div></div>';
-
-            try {
-                const resp = await fetch(`${API_BASE}/api/law/search`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query: query, num_results: 5 })
-                });
-
-                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-                const data = await resp.json();
-
-                const results = data.results || [];
-                const articles = data.articles || [];
-                const message = data.message || '';
-
-                let html = '';
-
-                // 消息提示
-                if (message) {
-                    html += `<div style="margin-bottom:12px; padding:8px 12px; background:#ebf4ff; border-left:3px solid #2f5597; border-radius:6px; font-size:13px; color:#2f5597;">${escapeHtml(message)}</div>`;
-                }
-
-                // 显示具体条款内容（如果有）
-                if (articles.length > 0) {
-                    html += '<div style="margin-bottom:16px;">';
-                    for (const a of articles) {
-                        html += '<div style="background:#fffbf0; border:1px solid #f6e05e; border-radius:12px; padding:16px; margin-bottom:10px;">' +
-                            '<div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">' +
-                                '<span style="font-weight:600; color:#975a16; font-size:15px;">📜 ' + escapeHtml(a.law_name) + '</span>' +
-                                '<span style="font-weight:600; color:#2f5597;">' + escapeHtml(a.article_title) + '</span>' +
-                            '</div>' +
-                            '<div style="font-size:14px; line-height:1.8; color:#2d3748; white-space:pre-wrap;">' + escapeHtml(a.content) + '</div>' +
-                            (a.source ? '<div style="margin-top:10px; font-size:11px; color:#a0aec0;">来源：' + escapeHtml(a.source) + '</div>' : '') +
-                        '</div>';
-                    }
-                    html += '</div>';
-                }
-
-                // 显示相关法律列表
-                if (results.length > 0) {
-                    if (articles.length > 0) {
-                        html += '<div style="font-size:13px; color:#718096; margin-bottom:8px; padding-top:8px; border-top:1px dashed #e2e8f0;">📋 相关法律：</div>';
-                    }
-                    html += results.map(item => {
-                        const name = item.title || '';
-                        const status = item.status || '';
-                        const statusCode = item.status_code || 0;
-                        const url = item.detail_url || '';
-                        const authority = item.authority || '';
-                        const effDate = item.effective_date || '';
-
-                        const statusMap = {
-                            3: { icon: '✅', text: '现行有效', bg: '#f0fff4', color: '#276749', border: '#c6f6d5' },
-                            2: { icon: '⚠️', text: '已修改', bg: '#fffaf0', color: '#c05621', border: '#faf089' },
-                            1: { icon: '❌', text: '已废止', bg: '#fff5f5', color: '#c53030', border: '#fed7d7' },
-                            4: { icon: '🕐', text: '尚未生效', bg: '#ebf8ff', color: '#2b6cb0', border: '#bee3f8' },
-                        };
-                        const s = statusMap[statusCode] || { icon: 'ℹ️', text: status, bg: '#edf2f7', color: '#4a5568', border: '#e2e8f0' };
-                        const statusTag = `<span style="display:inline-block; background:${s.bg}; color:${s.color}; padding:2px 10px; border-radius:6px; font-size:11px; border:1px solid ${s.border}; white-space:nowrap;">${s.icon} ${s.text}</span>`;
-
-                        return '<div style="padding:12px; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:8px; transition:all 0.2s;" onmouseover="this.style.borderColor=\'#cbd5e0\';this.style.background=\'#fafbfc\'" onmouseout="this.style.borderColor=\'#e2e8f0\';this.style.background=\'transparent\'">' +
-                            '<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">' +
-                                '<strong style="font-size:14px; color:#2d3748;">' + escapeHtml(name) + '</strong>' +
-                                statusTag +
-                            '</div>' +
-                            '<div style="font-size:12px; color:#718096; line-height:1.6;">' +
-                                (authority ? '发布机关：' + escapeHtml(authority) : '') +
-                                (effDate ? '　|　施行日期：' + escapeHtml(effDate) : '') +
-                            '</div>' +
-                            (url ? '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener" style="display:inline-block; margin-top:6px; font-size:12px; color:#2f5597; text-decoration:none;">🔗 在国家法律法规数据库查看 →</a>' : '') +
-                        '</div>';
-                    }).join('');
-                }
-
-                if (!html) {
-                    html = '<div style="text-align:center; color:#718096; padding:30px 0; font-size:14px;">未找到相关法律法规</div>';
-                }
-
-                resultsEl.innerHTML = html;
-
-            } catch (error) {
-                resultsEl.innerHTML = '<div style="text-align:center; color:#e53e3e; padding:24px 0; font-size:14px;">搜索失败：' + escapeHtml(error.message) + '</div>';
-            }
-        }
     </script>
 </body>
 </html>

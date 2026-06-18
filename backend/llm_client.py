@@ -8,7 +8,6 @@ from typing import AsyncIterator, Dict, Any, Optional
 import httpx
 
 from config import LLM_CONFIG
-from skills.skill_loader import skill_loader
 
 
 LQ = "\u201c"  # left double quotation mark
@@ -40,13 +39,10 @@ class LLMClient:
         messages: list,
         stream: bool = False,
         temperature: float = 0.7,
-        max_tokens: int = 8192,
+        max_tokens: int = 2048,
     ) -> str:
         if self._fallback_mode:
             return self._generate_mock_response(messages)
-
-        # thinking 模式下 reasoning_tokens 计入 max_tokens，需要更大的配额
-        effective_max_tokens = max_tokens * 3 if self.thinking_enabled else max_tokens
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -57,7 +53,7 @@ class LLMClient:
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
-            "max_tokens": effective_max_tokens,
+            "max_tokens": max_tokens,
             "stream": stream,
         }
 
@@ -66,20 +62,13 @@ class LLMClient:
 
         client = await self._get_client()
         try:
-            print(f"[LLM] 请求 API, 消息数: {len(messages)}, max_tokens: {effective_max_tokens}")
+            print(f"[LLM] 请求 API, 消息数: {len(messages)}")
             response = await client.post(self.base_url, headers=headers, json=payload)
             response.raise_for_status()
             result = response.json()
 
             if "choices" in result and len(result["choices"]) > 0:
-                msg = result["choices"][0]["message"]
-                reply = msg.get("content", "")
-                # thinking 模式下 content 可能为空字符串（reasoning 消耗了全部 token）
-                if not reply and self.thinking_enabled:
-                    reasoning = msg.get("reasoning_content", "")
-                    if reasoning:
-                        print(f"[LLM] thinking 模式 content 为空，reasoning 长度: {len(reasoning)}")
-                        return f"思考过程：\n{reasoning}\n\n---\n\n抱歉，模型思考过程消耗了过多 token，未能生成最终回复。请尝试简化问题或稍后重试。"
+                reply = result["choices"][0]["message"]["content"]
                 print(f"[LLM] 回复成功, 长度: {len(reply)}")
                 return reply
             return "抱歉，未能获取到有效回复。"
@@ -184,16 +173,13 @@ class LLMClient:
         self,
         messages: list,
         temperature: float = 0.7,
-        max_tokens: int = 8192,
+        max_tokens: int = 2048,
     ) -> AsyncIterator[str]:
         if self._fallback_mode:
             response = self._generate_mock_response(messages)
             for chunk in self._chunk_text(response, 8):
                 yield chunk
             return
-
-        # thinking 模式下 reasoning_tokens 计入 max_tokens，需要更大的配额
-        effective_max_tokens = max_tokens * 3 if self.thinking_enabled else max_tokens
 
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -204,7 +190,7 @@ class LLMClient:
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
-            "max_tokens": effective_max_tokens,
+            "max_tokens": max_tokens,
             "stream": True,
         }
 
@@ -213,13 +199,12 @@ class LLMClient:
 
         client = await self._get_client()
         try:
-            print(f"[LLM-Stream] 请求 API, 消息数: {len(messages)}, max_tokens: {effective_max_tokens}")
+            print(f"[LLM-Stream] 请求 API, 消息数: {len(messages)}")
             async with client.stream(
                 "POST", self.base_url, headers=headers, json=payload
             ) as response:
                 response.raise_for_status()
                 chunk_count = 0
-                has_content = False
                 async for line in response.aiter_lines():
                     if line.startswith("data: "):
                         data = line[6:]
@@ -229,17 +214,9 @@ class LLMClient:
                             json_data = json.loads(data)
                             if "choices" in json_data and json_data["choices"]:
                                 delta = json_data["choices"][0].get("delta", {})
-                                # thinking 模式：先输出 reasoning_content，再输出 content
-                                # 两者不会同时出现在同一个 delta 中
-                                if "content" in delta and delta["content"]:
+                                if "content" in delta:
                                     chunk_count += 1
-                                    has_content = True
                                     yield delta["content"]
-                                # reasoning_content 不输出给用户，但记录日志
-                                elif "reasoning_content" in delta and delta["reasoning_content"]:
-                                    if not has_content:
-                                        # 首次收到 reasoning，提示用户正在思考
-                                        pass
                         except json.JSONDecodeError:
                             continue
                 print(f"[LLM-Stream] 完成, 共 {chunk_count} 个数据块")
@@ -265,8 +242,7 @@ class LLMClient:
                 yield buffer[i : i + chunk_size]
 
 
-def build_legal_system_prompt(knowledge_context: str = "", user_message: str = "") -> str:
-    """构建系统提示词，支持技能匹配增强"""
+def build_legal_system_prompt(knowledge_context: str = "") -> str:
     base_prompt = (
         "你是国企法务合规助手，基于国企法务合规体系提供专业支持。\n\n"
         "核心能力：\n"
@@ -307,27 +283,7 @@ def build_legal_system_prompt(knowledge_context: str = "", user_message: str = "
                 "标注法条时效性状态，引用时注明来源为'国家法律法规数据库'。"
             )
 
-    # 技能匹配增强：根据用户消息匹配专项技能指引
-    if user_message:
-        try:
-            scheduler = _get_skill_scheduler()
-            base_prompt = scheduler.build_system_prompt(user_message, base_prompt)
-        except Exception as e:
-            print(f"[Skill] 技能匹配失败: {e}")
-
     return base_prompt
-
-
-# 技能调度器缓存
-_skill_scheduler = None
-
-
-def _get_skill_scheduler():
-    """懒加载技能调度器"""
-    global _skill_scheduler
-    if _skill_scheduler is None:
-        _skill_scheduler = skill_loader.load_all_skills()
-    return _skill_scheduler
 
 
 llm_client = LLMClient()

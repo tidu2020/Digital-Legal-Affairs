@@ -26,10 +26,6 @@ from law_validator import (
     generate_validation_report, generate_correction_markdown,
     should_auto_validate,
 )
-from confidence import (
-    assess_confidence, generate_confidence_markdown,
-    annotation_to_dict,
-)
 
 BASE_DIR = Path(__file__).parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
@@ -87,7 +83,6 @@ class ChatResponse(BaseModel):
     sources: Optional[List[Dict[str, Any]]] = None
     law_verification: Optional[Dict[str, Any]] = None
     law_validation_report: Optional[Dict[str, Any]] = None
-    confidence: Optional[Dict[str, Any]] = None
 
 
 class LawSearchRequest(BaseModel):
@@ -195,20 +190,8 @@ def _detect_article_numbers(message: str) -> List[str]:
 
 def _search_laws_for_query(query: str) -> str:
     try:
-        result = law_search_tool.search(query, num_results=3)
-        message = result.get("message", "")
-        articles = result.get("articles", [])
-        laws = result.get("results", [])
-        parts = []
-        if message:
-            parts.append(message)
-        if articles:
-            for a in articles:
-                parts.append(f"【{a['law_name']} {a['article_title']}】\n{a['content']}")
-        elif laws:
-            for l in laws[:3]:
-                parts.append(f"• {l['status'][:2]} {l['title']} ({l['effective_date']})")
-        return "\n".join(parts) if parts else ""
+        _, text = law_search_tool.search(query, num_results=3, verify=True)
+        return text
     except Exception as e:
         print(f"法条检索失败: {e}")
         return ""
@@ -341,7 +324,7 @@ async def chat(request: ChatRequest):
     law_context = _build_law_context(current_message)
 
     # 构建系统提示词
-    system_prompt = build_legal_system_prompt(context + law_context, current_message)
+    system_prompt = build_legal_system_prompt(context + law_context)
 
     # 构建完整消息列表
     full_messages = [
@@ -364,16 +347,6 @@ async def chat(request: ChatRequest):
     enhanced_response, validation_report = await _run_post_validation(
         response_text, current_message, has_attachments
     )
-
-    # 评估置信度
-    confidence_annotation = assess_confidence(
-        validation_report, has_attachments, current_message
-    )
-    confidence_dict = annotation_to_dict(confidence_annotation)
-
-    # 追加置信度标注到回复
-    confidence_md = generate_confidence_markdown(confidence_annotation)
-    enhanced_response = enhanced_response + confidence_md
 
     # 保存对话历史
     session_manager.add_message(session_id, "user", current_message)
@@ -399,8 +372,7 @@ async def chat(request: ChatRequest):
         response=enhanced_response,
         sources=sources if sources else None,
         law_verification=law_verification,
-        law_validation_report=validation_report,
-        confidence=confidence_dict
+        law_validation_report=validation_report
     )
 
 
@@ -441,7 +413,7 @@ async def chat_stream(request: ChatRequest):
     law_context = _build_law_context(current_message)
 
     # 构建系统提示词
-    system_prompt = build_legal_system_prompt(context + law_context, current_message)
+    system_prompt = build_legal_system_prompt(context + law_context)
 
     # 构建完整消息列表
     full_messages = [
@@ -479,20 +451,6 @@ async def chat_stream(request: ChatRequest):
                 full_response = enhanced_response
                 yield f"data: {json.dumps({'validation_report': validation_report}, ensure_ascii=False)}\n\n"
                 yield f"data: {json.dumps({'content': generate_correction_markdown(validation_report)}, ensure_ascii=False)}\n\n"
-
-            # 评估置信度
-            confidence_annotation = assess_confidence(
-                validation_report, has_attachments, current_message
-            )
-            confidence_dict = annotation_to_dict(confidence_annotation)
-
-            # 发送置信度数据到前端
-            yield f"data: {json.dumps({'confidence': confidence_dict}, ensure_ascii=False)}\n\n"
-
-            # 追加置信度标注到回复
-            confidence_md = generate_confidence_markdown(confidence_annotation)
-            yield f"data: {json.dumps({'content': confidence_md}, ensure_ascii=False)}\n\n"
-            full_response = full_response + confidence_md
 
             # 保存对话历史
             session_manager.add_message(session_id, "user", current_message)
@@ -741,19 +699,20 @@ async def list_knowledge_documents():
 @app.post("/api/law/search")
 async def search_law(request: LawSearchRequest):
     """
-    法条检索接口（增强版）
-    - 支持精准法律名称搜索
-    - 支持"第X条"查询，返回具体条款内容
-    - 自动标注时效性状态
+    法条检索接口 - 对接国家法律法规数据库 (flk.npc.gov.cn)
+    自动标注时效性：有效 / 已废止 / 已修改 / 尚未生效
     """
     try:
-        result = law_search_tool.search(
+        results, text = law_search_tool.search(
             query=request.query,
             num_results=request.num_results,
+            verify=request.verify
         )
         return {
             "success": True,
-            **result,
+            "query": request.query,
+            "results": results,
+            "formatted": text,
             "source": "国家法律法规数据库 (flk.npc.gov.cn)"
         }
     except Exception as e:
