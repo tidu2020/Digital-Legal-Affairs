@@ -1,5 +1,0 @@
-URL: https://chatai.bii.com.cn/open-api/llm/k8s/qwen/v1/chat/comp
-Model: qwen
-Key Empty: False
-Status: 200
-Reply: 测试成功
