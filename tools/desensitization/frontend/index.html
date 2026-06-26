@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件脱敏工具 - 国企数字法务平台</title>
+    <style>
+        :root { --primary:#1a365d; --primary-light:#2c5282; --accent:#3182ce; --bg:#f7fafc; --card:#fff; --text:#1a202c; --text-secondary:#4a5568; --border:#e2e8f0; --success:#38a169; --warning:#d69e2e; --danger:#e53e3e; --radius:12px; --radius-sm:8px; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+        .header { background:linear-gradient(135deg,var(--primary),var(--primary-light)); color:white; padding:0 24px; height:56px; display:flex; align-items:center; justify-content:space-between; }
+        .header-left { display:flex; align-items:center; gap:12px; }
+        .back-btn { background:rgba(255,255,255,0.1); border:none; color:white; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px; }
+        .back-btn:hover { background:rgba(255,255,255,0.2); }
+        .header h1 { font-size:16px; font-weight:600; }
+        .main { max-width:900px; margin:0 auto; padding:32px; }
+        .section { background:var(--card); border-radius:var(--radius); padding:24px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:24px; }
+        .section h3 { font-size:16px; margin-bottom:16px; color:var(--primary); }
+        .info-box { background:#fdf2f2; border:1px solid #f5c6c6; border-radius:var(--radius-sm); padding:12px 16px; margin-bottom:16px; font-size:13px; color:var(--primary); }
+        .upload-area { border:2px dashed var(--border); border-radius:var(--radius); padding:40px; text-align:center; cursor:pointer; transition:all 0.2s; }
+        .upload-area:hover { border-color:var(--accent); background:#fdf2f2; }
+        .upload-area.uploading { border-color:var(--warning); background:#fffaf0; }
+        .upload-icon { font-size:48px; margin-bottom:12px; }
+        .upload-text { font-size:14px; color:var(--text-secondary); }
+        .file-list { margin-top:16px; }
+        .file-item { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#f7fafc; border-radius:var(--radius-sm); margin-bottom:8px; font-size:13px; }
+        .file-item.success { border-left:3px solid var(--success); }
+        .file-item.error { border-left:3px solid var(--danger); }
+        .progress-section { display:none; margin-bottom:24px; }
+        .progress-section.active { display:block; }
+        .progress-bar { height:8px; background:var(--border); border-radius:4px; overflow:hidden; margin-bottom:8px; }
+        .progress-fill { height:100%; background:var(--primary); border-radius:4px; transition:width 0.3s; }
+        .progress-text { font-size:13px; color:var(--text-secondary); }
+        .result-section { display:none; }
+        .result-section.active { display:block; }
+        .result-actions { display:flex; gap:12px; margin-top:16px; }
+        .btn { padding:10px 20px; border:none; border-radius:var(--radius-sm); font-size:14px; cursor:pointer; }
+        .btn-primary { background:var(--primary); color:white; }
+        .btn-primary:hover { background:#2b6cb0; }
+        .btn-success { background:var(--success); color:white; }
+        .btn-success:hover { background:#2f855a; }
+        .btn-secondary { background:var(--border); color:var(--text); }
+        .btn-secondary:hover { background:#cbd5e0; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <button class="back-btn" onclick="window.location.href='/'">← 返回</button>
+            <h1>🔒 文件脱敏工具</h1>
+        </div>
+    </header>
+    <div class="main">
+        <div class="info-box">
+            💡 本工具使用AI智能识别文档中的敏感信息（人名、手机号、身份证号、地址等），并进行合理化替换。支持 Word、Excel、PPT、PDF、图片等格式。
+        </div>
+        
+        <!-- Upload Section -->
+        <div class="section" id="uploadSection">
+            <h3>选择文件</h3>
+            <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                <input type="file" id="fileInput" multiple accept=".txt,.md,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.pdf,.jpg,.jpeg,.png,.bmp" style="display:none" onchange="handleFiles(this.files)">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">点击或拖拽上传文件</div>
+                <div style="font-size:12px;color:#a0aec0;margin-top:8px;">支持 Word、Excel、PPT、PDF、图片等格式，最多20个文件</div>
+            </div>
+            <div class="file-list" id="fileList"></div>
+            <div style="margin-top:16px;">
+                <button class="btn btn-primary" id="startBtn" onclick="startDesensitization()" disabled>🔒 开始脱敏</button>
+            </div>
+        </div>
+
+        <!-- Progress Section -->
+        <div class="progress-section" id="progressSection">
+            <div class="section">
+                <h3>处理进度</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+                </div>
+                <div class="progress-text" id="progressText">准备中...</div>
+            </div>
+        </div>
+
+        <!-- Result Section -->
+        <div class="result-section" id="resultSection">
+            <div class="section">
+                <h3>处理结果</h3>
+                <div id="resultList"></div>
+                <div class="result-actions">
+                    <button class="btn btn-success" onclick="downloadFiles()">📥 下载脱敏文件</button>
+                    <button class="btn btn-secondary" onclick="downloadReport()">📄 下载报告</button>
+                    <button class="btn btn-primary" onclick="resetForm()">🔄 重新处理</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        let currentBatchId = null;
+
+        function handleFiles(files) {
+            if (!files || files.length === 0) return;
+            
+            selectedFiles = Array.from(files);
+            updateFileList();
+            document.getElementById('startBtn').disabled = selectedFiles.length === 0;
+        }
+
+        function updateFileList() {
+            const el = document.getElementById('fileList');
+            if (selectedFiles.length === 0) {
+                el.innerHTML = '';
+                return;
+            }
+            
+            el.innerHTML = selectedFiles.map((f, i) => `
+                <div class="file-item">
+                    <span>📎 ${f.name} (${(f.size / 1024).toFixed(1)} KB)</span>
+                    <button onclick="removeFile(${i})" style="border:none;background:none;cursor:pointer;color:#e53e3e;">×</button>
+                </div>
+            `).join('');
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+            document.getElementById('startBtn').disabled = selectedFiles.length === 0;
+        }
+
+        async function startDesensitization() {
+            if (selectedFiles.length === 0) return;
+            
+            document.getElementById('uploadSection').style.display = 'none';
+            document.getElementById('progressSection').classList.add('active');
+            document.getElementById('startBtn').disabled = true;
+            
+            const formData = new FormData();
+            for (const file of selectedFiles) {
+                formData.append('files', file);
+            }
+            
+            try {
+                const response = await fetch('/tools/desensitization/api/upload', { method: 'POST', body: formData });
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentBatchId = result.batch_id;
+                    pollStatus();
+                } else {
+                    throw new Error(result.error || '上传失败');
+                }
+            } catch (error) {
+                alert('上传失败: ' + error.message);
+                resetForm();
+            }
+        }
+
+        async function pollStatus() {
+            if (!currentBatchId) return;
+            
+            try {
+                const response = await fetch(`/tools/desensitization/api/status/${currentBatchId}`);
+                const status = await response.json();
+                
+                document.getElementById('progressFill').style.width = status.progress + '%';
+                document.getElementById('progressText').textContent = 
+                    `处理中... ${status.done_files}/${status.total_files} 个文件 (${status.progress}%)`;
+                
+                if (status.status === 'done') {
+                    showResults(status);
+                } else if (status.status === 'error') {
+                    alert('处理失败: ' + status.error);
+                    resetForm();
+                } else {
+                    setTimeout(pollStatus, 1000);
+                }
+            } catch (error) {
+                console.error('Poll error:', error);
+                setTimeout(pollStatus, 2000);
+            }
+        }
+
+        function showResults(status) {
+            document.getElementById('progressSection').classList.remove('active');
+            document.getElementById('resultSection').classList.add('active');
+            
+            const el = document.getElementById('resultList');
+            el.innerHTML = status.results.map(r => `
+                <div class="file-item ${r.success ? 'success' : 'error'}">
+                    <span>${r.success ? '✅' : '❌'} ${r.source_filename}</span>
+                    <span>替换 ${r.replacement_count} 处</span>
+                </div>
+            `).join('');
+        }
+
+        function downloadFiles() {
+            if (currentBatchId) {
+                window.open(`/tools/desensitization/api/download/${currentBatchId}/files`);
+            }
+        }
+
+        function downloadReport() {
+            if (currentBatchId) {
+                window.open(`/tools/desensitization/api/download/${currentBatchId}/report`);
+            }
+        }
+
+        function resetForm() {
+            selectedFiles = [];
+            currentBatchId = null;
+            document.getElementById('uploadSection').style.display = 'block';
+            document.getElementById('progressSection').classList.remove('active');
+            document.getElementById('resultSection').classList.remove('active');
+            document.getElementById('fileList').innerHTML = '';
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('fileInput').value = '';
+        }
+    </script>
+</body>
+</html>

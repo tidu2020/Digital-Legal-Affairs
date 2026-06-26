@@ -13,8 +13,12 @@
 
 import re
 import asyncio
+import sys
+import os
 from typing import List, Dict, Optional, Tuple, Set
 from dataclasses import dataclass, field
+
+sys.path.insert(0, os.path.dirname(__file__))
 from law_search import law_search_tool, FLKApiClient, LawSearchResult
 
 

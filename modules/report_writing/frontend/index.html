@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>报告撰写 - 国企数字法务平台</title>
+    <style>
+        :root { --primary:#1a365d; --primary-light:#2c5282; --accent:#3182ce; --bg:#f7fafc; --card:#fff; --text:#1a202c; --text-secondary:#4a5568; --border:#e2e8f0; --success:#38a169; --radius:12px; --radius-sm:8px; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+        .header { background:linear-gradient(135deg,var(--primary),var(--primary-light)); color:white; padding:0 24px; height:56px; display:flex; align-items:center; justify-content:space-between; }
+        .header-left { display:flex; align-items:center; gap:12px; }
+        .back-btn { background:rgba(255,255,255,0.1); border:none; color:white; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:13px; }
+        .back-btn:hover { background:rgba(255,255,255,0.2); }
+        .header h1 { font-size:16px; font-weight:600; }
+        .main { max-width:1200px; margin:0 auto; padding:32px; }
+        .section { background:var(--card); border-radius:var(--radius); padding:24px; box-shadow:0 1px 3px rgba(0,0,0,0.1); margin-bottom:24px; }
+        .section h3 { font-size:16px; margin-bottom:16px; color:var(--primary); }
+        .form-group { margin-bottom:16px; }
+        .form-group label { display:block; font-size:14px; font-weight:500; margin-bottom:6px; }
+        .form-group textarea, .form-group select { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius-sm); font-size:14px; font-family:inherit; resize:vertical; }
+        .form-group textarea:focus { outline:none; border-color:var(--accent); }
+        .btn-primary { padding:12px 24px; background:var(--primary); color:white; border:none; border-radius:var(--radius-sm); font-size:14px; font-weight:500; cursor:pointer; }
+        .btn-primary:hover { background:#2b6cb0; }
+        .report-types { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:24px; }
+        .report-type { padding:16px; border:2px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; text-align:center; }
+        .report-type:hover { border-color:var(--accent); }
+        .report-type.active { border-color:var(--accent); background:#fdf2f2; }
+        .report-type-icon { font-size:24px; margin-bottom:8px; }
+        .report-type-name { font-size:14px; font-weight:500; }
+        #reportResult { display:none; }
+        .report-content { white-space:pre-wrap; font-size:14px; line-height:1.8; padding:16px; background:#f7fafc; border-radius:var(--radius-sm); }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <button class="back-btn" onclick="window.location.href='/'">← 返回</button>
+            <h1>📊 报告撰写</h1>
+        </div>
+    </header>
+    <div class="main">
+        <div class="section">
+            <h3>选择报告类型</h3>
+            <div class="report-types">
+                <div class="report-type active" onclick="selectType('法治建设总结', this)"><div class="report-type-icon">📋</div><div class="report-type-name">法治建设总结</div></div>
+                <div class="report-type" onclick="selectType('合规管理报告', this)"><div class="report-type-icon">🛡️</div><div class="report-type-name">合规管理报告</div></div>
+                <div class="report-type" onclick="selectType('内控管理报告', this)"><div class="report-type-icon">🔒</div><div class="report-type-name">内控管理报告</div></div>
+                <div class="report-type" onclick="selectType('风险报告', this)"><div class="report-type-icon">⚠️</div><div class="report-type-name">风险报告</div></div>
+                <div class="report-type" onclick="selectType('律师管理报告', this)"><div class="report-type-icon">👨‍⚖️</div><div class="report-type-name">律师管理报告</div></div>
+                <div class="report-type" onclick="selectType('其他报告', this)"><div class="report-type-icon">📄</div><div class="report-type-name">其他报告</div></div>
+            </div>
+        </div>
+        <div class="section">
+            <h3>报告信息</h3>
+            <div class="form-group">
+                <label>报告期间</label>
+                <input type="text" id="reportPeriod" placeholder="如：2024年第一季度、2024年度">
+            </div>
+            <div class="form-group">
+                <label>报告内容要点</label>
+                <textarea id="reportContent" rows="6" placeholder="请描述报告的主要内容、数据、工作成果等"></textarea>
+            </div>
+            <div class="form-group">
+                <label>上传参考文件（可选）</label>
+                <input type="file" multiple accept=".txt,.pdf,.docx,.doc,.xlsx,.xls" onchange="handleReportFiles(this.files)">
+                <div id="fileList" style="margin-top:8px;"></div>
+            </div>
+            <div class="form-group">
+                <label>特殊要求（可选）</label>
+                <textarea id="reportRequirements" rows="3" placeholder="如：重点突出某项工作、增加数据分析等"></textarea>
+            </div>
+            <button class="btn-primary" onclick="generateReport()">📝 生成报告</button>
+        </div>
+        <div class="section" id="reportResult">
+            <h3>生成的报告</h3>
+            <div class="report-content" id="reportOutput"></div>
+            <div style="margin-top:16px;">
+                <button class="btn-primary" onclick="downloadReport()">📥 下载报告</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        let selectedReportType = '法治建设总结';
+        let generatedReport = '';
+        let uploadedFiles = [];
+
+        function selectType(type, el) {
+            selectedReportType = type;
+            document.querySelectorAll('.report-type').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        async function handleReportFiles(files) {
+            if (!files || files.length === 0) return;
+            
+            const formData = new FormData();
+            for (const file of files) {
+                formData.append('files', file);
+            }
+            
+            try {
+                const response = await fetch('/modules/report_writing/api/upload', { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.success && result.files) {
+                    for (const file of result.files) {
+                        uploadedFiles.push({
+                            file_id: file.file_id,
+                            filename: file.filename,
+                            info: file.info
+                        });
+                    }
+                    updateFileListDisplay();
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+            }
+        }
+
+        function updateFileListDisplay() {
+            const el = document.getElementById('fileList');
+            if (el) {
+                if (uploadedFiles.length === 0) {
+                    el.innerHTML = '';
+                } else {
+                    el.innerHTML = uploadedFiles.map(f => 
+                        `<div style="padding:4px 8px;background:#f7fafc;border-radius:4px;margin-top:4px;font-size:12px;">📎 ${f.filename}</div>`
+                    ).join('');
+                }
+            }
+        }
+
+        async function generateReport() {
+            const period = document.getElementById('reportPeriod').value;
+            const content = document.getElementById('reportContent').value;
+            const requirements = document.getElementById('reportRequirements').value;
+            if (!content.trim() && uploadedFiles.length === 0) return alert('请输入报告内容要点或上传文件');
+            
+            try {
+                const response = await fetch('/modules/report_writing/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        report_type: selectedReportType,
+                        period,
+                        content,
+                        requirements,
+                        attachments: uploadedFiles.map(f => f.file_id)
+                    })
+                });
+                const result = await response.json();
+                generatedReport = result.response;
+                document.getElementById('reportOutput').textContent = generatedReport;
+                document.getElementById('reportResult').style.display = 'block';
+            } catch (error) { alert('生成失败: ' + error.message); }
+        }
+
+        function downloadReport() {
+            const blob = new Blob([generatedReport], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${selectedReportType}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

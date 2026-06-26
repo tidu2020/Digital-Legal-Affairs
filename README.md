@@ -1,118 +1,74 @@
-# 国企数字法务
+# 国企数字法务平台
 
-国企法务合规智能助手
+国企法务合规智能助手，集成六大核心功能模块 + 实用小工具。
 
-## 功能特性
+## 功能模块
 
-- 💬 **多轮对话**：支持与AI进行连续对话，记忆上下文
-- 📎 **多文档上传**：支持上传txt、md、pdf、docx格式文档
-- 🔍 **RAG检索增强**：基于向量检索的智能问答
-- 🛡️ **国企法务体系**：内置完整的国企法务合规知识库
+| 模块 | 路径 | 说明 |
+|------|------|------|
+| 法律合规咨询 | `/modules/consulting` | 多轮对话、文件上传、法条自动检索 |
+| 合同审核 | `/modules/contract_review` | 合同文本审核、风险分析、报告生成 |
+| 案件应对 | `/modules/case_management` | 案情梳理、法律文书撰写（起诉状/答辩状等） |
+| 报告撰写 | `/modules/report_writing` | 法治建设总结、合规报告、风险报告等 |
+| 经营决策审核 | `/modules/decision_review` | 上会议题、请示签报审核 |
+| 制度审核 | `/modules/regulation_review` | 制度与法律/政策/公司制度冲突检查 |
 
-## 系统架构
+## 小工具
+
+| 工具 | 路径 | 说明 |
+|------|------|------|
+| 文件脱敏 | `/tools/desensitization` | AI识别并替换文档敏感信息 |
+| 法条检索 | `/tools/law_search` | 跳转国家法律法规数据库 |
+
+## 项目结构
 
 ```
-jingtou-digital-legal/
-├── backend/
-│   ├── app.py              # FastAPI主应用
-│   ├── config.py           # 配置文件
-│   ├── llm_client.py       # 私有化大模型客户端
-│   ├── embeddings.py       # 文档向量化处理
-│   ├── retrieval.py        # RAG检索逻辑
-│   └── requirements.txt   # Python依赖
+Digital-Legal-Affairs/
+├── main.py                    # 综合入口（FastAPI）
 ├── frontend/
-│   └── index.html          # 前端页面
-├── data/
-│   └── knowledge_base/     # 知识库文档
-└── README.md
+│   └── index.html             # 首页（智能助手+模块导航+小工具）
+├── shared/                    # 共享组件
+│   ├── llm_client.py          # LLM客户端
+│   ├── law_search.py          # 法条检索（flk.npc.gov.cn）
+│   ├── law_validator.py       # 法条校验
+│   └── file_processor.py      # 文件解析
+├── modules/                   # 六大功能模块
+│   ├── consulting/            # 法律合规咨询
+│   ├── contract_review/       # 合同审核
+│   ├── case_management/       # 案件应对
+│   ├── report_writing/        # 报告撰写
+│   ├── decision_review/       # 经营决策审核
+│   └── regulation_review/     # 制度审核
+└── tools/                     # 小工具
+    ├── desensitization/       # 文件脱敏
+    └── law_search/            # 法条检索
 ```
 
 ## 快速启动
 
-### 1. 安装依赖
-
 ```bash
-cd jingtou-digital-legal/backend
-pip install -r requirements.txt
+# 安装依赖
+pip install fastapi uvicorn openai python-dotenv python-docx PyPDF2 requests pycryptodome
+
+# 启动服务
+python main.py
 ```
 
-### 2. 配置大模型
-
-系统已配置使用您提供的私有化大模型API：
-- 模型：Qwen (启元)
-- API地址：https://chatai.bii.com.cn/open-api/llm/k8s/qwen/v1/chat/completions
-
-如需修改，请编辑 `backend/config.py` 中的 `LLM_CONFIG`。
-
-### 3. 启动服务
-
-```bash
-cd backend
-python app.py
-```
-
-服务将在 http://localhost:8000 启动
-
-### 4. 访问系统
-
-打开浏览器访问 http://localhost:8000
-
-## 核心能力
-
-### 1. 制度法律审核
-为国企规章制度的法律审核提供全流程指引。
-- 合法性：与现行法律法规、国资委规定、公司章程一致
-- 合规性：符合合规管理体系要求，嵌入合规控制点
-- 风险可控性：审批权限明确、流程闭环、责任可追溯
-- 体系兼容性：与现有制度不冲突、职责边界清晰
-
-### 2. 合同管理
-为国企合同全生命周期管理提供审核指引和风险提示。
-- 六部门协作审核流程
-- 合同审核"三个100%"之一：合同协议文本法律审核率100%
-- 重大合同提前3个工作日通知法律合规部参与谈判
-
-### 3. 诉讼仲裁案件管理
-为国企系统诉讼仲裁案件处理提供流程指引和时限要求。
-- 案件分类与处理主体
-- 重大案件包案制
-- 关键时限管理
-
-### 4. 合规管理
-为国企"四位一体"合规体系建设提供咨询支持。
-- "三张清单"机制
-- 合规重点领域
-- 专项合规指引
-
-### 5. 法务合规公文写作
-按照国企标准模板起草7类法务合规公文。
-
-## 使用示例
-
-### 咨询问题
-```
-"三个100%具体指什么？"
-"合同审核的流程是什么？"
-"重大案件的判断标准是什么？"
-```
-
-### 公文写作
-```
-"帮我起草一份法治工作总结"
-"写一份合规季报"
-```
+访问 http://localhost:1824
 
 ## 技术栈
 
 - **后端**：FastAPI + Python
-- **向量化**：Sentence-Transformers + FAISS
-- **大模型**：Qwen (启元私有化部署)
-- **前端**：原生HTML/CSS/JavaScript
+- **LLM**：Qwen（私有化部署）
+- **法条数据库**：国家法律法规数据库（flk.npc.gov.cn）
+- **前端**：原生 HTML/CSS/JavaScript
 
-## 注意事项
+## 配置
 
-⚠️ 本系统仅供参考，涉及重大决策、复杂诉讼等事项时，需法律合规部正式出具法律意见。
+编辑 `.env` 文件：
 
----
-
-国企 © 2024
+```env
+LLM_API_KEY=your_api_key
+LLM_BASE_URL=https://your-llm-endpoint/v1
+LLM_MODEL=qwen
+```

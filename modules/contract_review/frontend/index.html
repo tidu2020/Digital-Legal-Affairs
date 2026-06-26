@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合同审核 - 国企数字法务平台</title>
+    <style>
+        :root {
+            --primary: #8B1A1A;
+            --primary-light: #A52A2A;
+            --accent: #B8860B;
+            --accent-hover: #996B09;
+            --bg: #faf8f6;
+            --card: #ffffff;
+            --text: #1a202c;
+            --text-secondary: #4a5568;
+            --border: #e8e0d8;
+            --success: #38a169;
+            --warning: #d69e2e;
+            --danger: #c62828;
+            --radius: 12px;
+            --radius-sm: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 0 24px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 12px; }
+
+        .back-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .back-btn:hover { background: rgba(255,255,255,0.2); }
+
+        .header h1 { font-size: 16px; font-weight: 600; }
+
+        .main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        .form-section {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .form-section h3 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: var(--primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        .form-group textarea,
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .form-group textarea:focus,
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: #fdf2f2;
+        }
+
+        .upload-area.uploaded {
+            border-color: var(--success);
+            background: #f0fff4;
+        }
+
+        .upload-icon { font-size: 48px; margin-bottom: 12px; }
+        .upload-text { font-size: 14px; color: var(--text-secondary); }
+
+        .stance-options {
+            display: flex;
+            gap: 12px;
+        }
+
+        .stance-option {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-sm);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .stance-option:hover { border-color: var(--primary); }
+        .stance-option.active {
+            border-color: var(--primary);
+            background: #fdf2f2;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
+
+        .progress-section {
+            display: none;
+            margin-bottom: 24px;
+        }
+
+        .progress-section.active { display: block; }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .report-section {
+            display: none;
+        }
+
+        .report-section.active { display: block; }
+
+        .report-content {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            line-height: 1.8;
+        }
+
+        .report-content h1 { font-size: 24px; margin-bottom: 16px; color: var(--primary); }
+        .report-content h2 { font-size: 18px; margin: 24px 0 12px; color: var(--primary); }
+        .report-content h3 { font-size: 16px; margin: 16px 0 8px; }
+
+        .report-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .btn-download {
+            padding: 10px 20px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-download:hover { background: #2f855a; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <button class="back-btn" onclick="window.location.href='/'">← 返回</button>
+            <h1>📝 合同审核</h1>
+        </div>
+    </header>
+
+    <div class="main">
+        <!-- Input Form -->
+        <div class="form-section" id="inputForm">
+            <h3>合同信息</h3>
+            
+            <div class="form-group">
+                <label>合同文本</label>
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                    <input type="file" id="fileInput" accept=".txt,.docx,.pdf" multiple style="display:none" onchange="handleFiles(this.files)">
+                    <div class="upload-icon">📋</div>
+                    <div class="upload-text">点击上传合同文件或粘贴文本</div>
+                    <div style="font-size:12px;color:#a0aec0;margin-top:8px;">支持 .txt / .docx / .pdf 格式</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>或直接粘贴合同文本</label>
+                <textarea id="contractText" rows="10" placeholder="在此粘贴合同全文..."></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>审核立场</label>
+                    <div class="stance-options">
+                        <div class="stance-option active" onclick="selectStance('auto', this)">🤖 自动推断</div>
+                        <div class="stance-option" onclick="selectStance('甲方', this)">🔵 甲方</div>
+                        <div class="stance-option" onclick="selectStance('乙方', this)">🟠 乙方</div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>特别关注条款（可选）</label>
+                    <textarea id="specialFocus" rows="3" placeholder="如：违约金上限、知识产权归属、争议解决方式等"></textarea>
+                </div>
+            </div>
+
+            <button class="btn-primary" id="startBtn" onclick="startReview()" disabled>🔍 开始审核</button>
+        </div>
+
+        <!-- Progress -->
+        <div class="progress-section" id="progressSection">
+            <div class="form-section">
+                <h3>审核进度</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+                </div>
+                <div class="progress-text" id="progressText">准备中...</div>
+            </div>
+        </div>
+
+        <!-- Report -->
+        <div class="report-section" id="reportSection">
+            <div class="report-content" id="reportContent"></div>
+            <div class="report-actions">
+                <button class="btn-download" onclick="downloadReport('md')">📥 下载 Markdown</button>
+                <button class="btn-download" onclick="downloadReport('txt')">📄 下载纯文本</button>
+                <button class="btn-download" onclick="resetForm()" style="background:var(--primary);">🔄 重新审核</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedStance = 'auto';
+        let uploadedText = '';
+        let uploadedFiles = [];
+        let reportMarkdown = '';
+
+        function selectStance(stance, el) {
+            selectedStance = stance;
+            document.querySelectorAll('.stance-option').forEach(e => e.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        async function handleFiles(files) {
+            if (!files || files.length === 0) return;
+            
+            const formData = new FormData();
+            for (const file of files) {
+                formData.append('files', file);
+            }
+            
+            try {
+                const response = await fetch('/modules/contract_review/api/upload', { method: 'POST', body: formData });
+                const result = await response.json();
+                if (result.success && result.files) {
+                    for (const file of result.files) {
+                        uploadedFiles.push({
+                            file_id: file.file_id,
+                            filename: file.filename,
+                            text: file.text,
+                            info: file.info
+                        });
+                        uploadedText += "\n\n" + file.text;
+                    }
+                    updateUploadDisplay();
+                    checkFormReady();
+                }
+            } catch (error) {
+                alert('文件上传失败: ' + error.message);
+            }
+        }
+
+        function updateUploadDisplay() {
+            const area = document.getElementById('uploadArea');
+            if (uploadedFiles.length > 0) {
+                area.classList.add('uploaded');
+                const names = uploadedFiles.map(f => f.filename).join(', ');
+                area.querySelector('.upload-text').textContent = `✅ 已上传 ${uploadedFiles.length} 个文件: ${names}`;
+            }
+        }
+
+        function checkFormReady() {
+            const text = uploadedText || document.getElementById('contractText').value;
+            document.getElementById('startBtn').disabled = text.length < 20;
+        }
+
+        document.getElementById('contractText').addEventListener('input', checkFormReady);
+
+        async function startReview() {
+            const contractText = uploadedText || document.getElementById('contractText').value;
+            if (contractText.length < 20) return;
+
+            document.getElementById('inputForm').style.display = 'none';
+            document.getElementById('progressSection').classList.add('active');
+            document.getElementById('startBtn').disabled = true;
+
+            try {
+                const response = await fetch('/modules/contract_review/api/review', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contract_text: contractText,
+                        user_stance: selectedStance,
+                        special_focus: document.getElementById('specialFocus').value,
+                        attachments: uploadedFiles.map(f => f.file_id)
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    reportMarkdown = result.report;
+                    document.getElementById('reportContent').innerHTML = marked.parse(reportMarkdown);
+                    document.getElementById('progressSection').classList.remove('active');
+                    document.getElementById('reportSection').classList.add('active');
+                } else {
+                    throw new Error(result.error || '审核失败');
+                }
+            } catch (error) {
+                alert('审核失败: ' + error.message);
+                resetForm();
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('inputForm').style.display = 'block';
+            document.getElementById('progressSection').classList.remove('active');
+            document.getElementById('reportSection').classList.remove('active');
+            document.getElementById('startBtn').disabled = false;
+        }
+
+        function downloadReport(format) {
+            const blob = new Blob([reportMarkdown], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `合同审核报告.${format === 'md' ? 'md' : 'txt'}`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Simple markdown parser
+        const marked = {
+            parse: function(text) {
+                return text
+                    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                    .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/^\| (.*?) \|$/gm, '<tr><td>$1</td></tr>')
+                    .replace(/(<tr>.*<\/tr>)/gs, '<table style="width:100%;border-collapse:collapse;margin:12px 0;">$1</table>')
+                    .replace(/^- (.*$)/gm, '<li>$1</li>')
+                    .replace(/(<li>.*<\/li>)/gs, '<ul style="margin:8px 0;padding-left:20px;">$1</ul>')
+                    .replace(/\n\n/g, '<br><br>')
+                    .replace(/\n/g, '<br>');
+            }
+        };
+    </script>
+</body>
+</html>

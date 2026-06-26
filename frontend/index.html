@@ -3,47 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>国企法务助手</title>
+    <title>国企数字法务平台</title>
     <style>
         :root {
-            --primary-color: #1a365d;
-            --secondary-color: #2c5282;
-            --accent-color: #3182ce;
-            --bg-color: #f7fafc;
-            --card-bg: #ffffff;
-            --text-primary: #1a202c;
-            --text-secondary: #4a5568;
-            --border-color: #e2e8f0;
-            --user-msg-bg: #ebf8ff;
-            --assistant-msg-bg: #f0fff4;
-            --error-color: #e53e3e;
-            --success-color: #38a169;
+            --primary: #8B1A1A;
+            --primary-light: #A52A2A;
+            --accent: #B8860B;
+            --accent-hover: #996B09;
+            --bg: #faf8f6;
+            --card: #ffffff;
+            --text: #1a1a1a;
+            --text-secondary: #5a5a5a;
+            --border: #e8e0d8;
+            --success: #2e7d32;
+            --warning: #d69e2e;
+            --danger: #c62828;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.08);
+            --radius: 12px;
+            --radius-sm: 8px;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: var(--bg-color);
-            color: var(--text-primary);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
         }
 
-        /* 头部 */
+        /* Header */
         .header {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             color: white;
-            padding: 16px 24px;
+            padding: 0 32px;
+            height: 64px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            box-shadow: var(--shadow-md);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .header-left {
@@ -53,8 +56,8 @@
         }
 
         .logo {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             background: rgba(255,255,255,0.2);
             border-radius: 8px;
             display: flex;
@@ -64,566 +67,370 @@
         }
 
         .header h1 {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
-        .header-right {
+        .header-nav {
             display: flex;
-            gap: 12px;
+            gap: 8px;
         }
 
-        .header-btn {
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.3);
+        .nav-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
             color: white;
             padding: 8px 16px;
-            border-radius: 6px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             transition: all 0.2s;
-        }
-
-        .header-btn:hover {
-            background: rgba(255,255,255,0.25);
-        }
-
-        /* 主内容区 */
-        .main-container {
             display: flex;
-            flex: 1;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .nav-btn.active {
+            background: rgba(255,255,255,0.25);
+            border-color: rgba(255,255,255,0.4);
+        }
+
+        /* Main Layout */
+        .main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        /* Welcome Section */
+        .welcome {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .welcome h2 {
+            font-size: 28px;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .welcome p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* Module Grid */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .module-card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 28px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
             overflow: hidden;
         }
 
-        /* 清空历史按钮样式 */
-        .clear-all-btn {
-            width: 100%;
-            padding: 10px;
-            margin-top: 8px;
-            border: none;
-            border-radius: 8px;
-            background-color: #fee2e2;
-            color: #dc2626;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .clear-all-btn:hover {
-            background-color: #fecaca;
-        }
-
-        /* 删除会话按钮样式 */
-        .delete-session-btn {
+        .module-card::before {
+            content: '';
             position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #9ca3af;
-            font-size: 16px;
-            cursor: pointer;
-            opacity: 0;
-            transition: all 0.2s;
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-        .session-item:hover .delete-session-btn {
-            opacity: 1;
-        }
-        .delete-session-btn:hover {
-            background-color: #fee2e2;
-            color: #dc2626;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
         }
 
-        /* 侧边栏 */
-        .sidebar {
-            width: 280px;
-            background: var(--card-bg);
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
+        .module-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-4px);
         }
 
-        .sidebar-header {
-            padding: 16px;
-            border-bottom: 1px solid var(--border-color);
+        .module-card:hover::before {
+            transform: scaleX(1);
         }
 
-        .new-chat-btn {
-            width: 100%;
-            background: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
+        .module-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 28px;
+            margin-bottom: 16px;
+        }
+
+        .module-card:nth-child(1) .module-icon { background: #fdf2f2; }
+        .module-card:nth-child(2) .module-icon { background: #f0fff4; }
+        .module-card:nth-child(3) .module-icon { background: #fffaf0; }
+        .module-card:nth-child(4) .module-icon { background: #faf5ff; }
+        .module-card:nth-child(5) .module-icon { background: #fff5f5; }
+        .module-card:nth-child(6) .module-icon { background: #f0fff4; }
+
+        .module-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text);
+        }
+
+        .module-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .module-tags {
+            display: flex;
+            flex-wrap: wrap;
             gap: 8px;
-            transition: background 0.2s;
         }
 
-        .new-chat-btn:hover {
-            background: var(--secondary-color);
+        .module-tag {
+            background: var(--bg);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--text-secondary);
         }
 
-        .sessions-list {
-            flex: 1;
-            overflow-y: auto;
-            padding: 8px;
+        .module-enter {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 16px;
+            color: var(--primary);
+            font-size: 14px;
+            font-weight: 500;
         }
 
-        .session-item {
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-bottom: 4px;
-            transition: background 0.2s;
+        .module-enter::after {
+            content: '→';
+            transition: transform 0.2s;
+        }
+
+        .module-card:hover .module-enter::after {
+            transform: translateX(4px);
+        }
+
+        /* Tools Section */
+        .tools-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        .session-item:hover {
-            background: var(--bg-color);
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
         }
 
-        .session-item.active {
-            background: var(--user-msg-bg);
-        }
-
-        .session-icon {
-            font-size: 16px;
-        }
-
-        .session-title {
-            flex: 1;
-            font-size: 14px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        /* 文档上传区 */
-        .upload-section {
-            padding: 16px;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .upload-section h3 {
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-            font-weight: 500;
-        }
-
-        .upload-zone {
-            border: 2px dashed var(--border-color);
-            border-radius: 8px;
+        .tool-card {
+            background: var(--card);
+            border-radius: var(--radius-sm);
             padding: 20px;
-            text-align: center;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
             cursor: pointer;
             transition: all 0.2s;
+            text-align: center;
         }
 
-        .upload-zone:hover, .upload-zone.dragover {
-            border-color: var(--accent-color);
-            background: var(--user-msg-bg);
+        .tool-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
         }
 
-        .upload-zone input {
-            display: none;
-        }
-
-        .upload-icon {
+        .tool-icon {
             font-size: 32px;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
 
-        .upload-text {
-            font-size: 13px;
+        .tool-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .tool-desc {
+            font-size: 12px;
             color: var(--text-secondary);
-        }
-
-        .upload-hint {
-            font-size: 11px;
-            color: #a0aec0;
             margin-top: 4px;
         }
 
-        /* 聊天区 */
-        .chat-container {
-            flex: 1;
+        /* Smart Chat Section */
+        .chat-section {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 16px 24px;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
             display: flex;
-            flex-direction: column;
-            background: var(--bg-color);
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chat-hint {
+            font-size: 12px;
+            color: var(--text-secondary);
         }
 
         .chat-messages {
-            flex: 1;
+            height: 400px;
             overflow-y: auto;
             padding: 24px;
         }
 
-        .message {
-            max-width: 800px;
-            margin: 0 auto 24px;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .message-header {
+        .chat-input-area {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
             display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .message-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-        }
-
-        .user-avatar {
-            background: var(--accent-color);
-            color: white;
-        }
-
-        .assistant-avatar {
-            background: var(--success-color);
-            color: white;
-        }
-
-        .message-role {
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        .message-content {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 16px;
-            line-height: 1.7;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .user-message .message-content {
-            background: var(--user-msg-bg);
-        }
-
-        .assistant-message .message-content {
-            background: var(--assistant-msg-bg);
-        }
-
-        .message-content pre {
-            background: #1a202c;
-            color: #e2e8f0;
-            padding: 16px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin: 12px 0;
-            font-size: 13px;
-        }
-
-        .message-content code {
-            background: #edf2f7;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 13px;
-            color: #e53e3e;
-        }
-
-        .message-content pre code {
-            background: none;
-            padding: 0;
-            color: inherit;
-        }
-
-        .message-sources {
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid var(--border-color);
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-        
-        /* 法条验证样式 */
-        .legal-ref {
-            background: #fff5f5;
-            border-left: 3px solid #e53e3e;
-            padding: 12px;
-            margin: 8px 0;
-            font-size: 13px;
-            border-radius: 4px;
-        }
-        .legal-ref .law-title {
-            font-weight: 600;
-            color: #c53030;
-        }
-        .legal-ref .law-content {
-            color: #4a5568;
-            margin-top: 4px;
-        }
-
-        /* 法条校验报告面板 */
-        .validation-report {
-            margin-top: 16px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            overflow: hidden;
-            background: #fafdf8;
-        }
-        .validation-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 16px;
-            background: linear-gradient(135deg, #e6fffa, #f0fff4);
-            border-bottom: 1px solid #c6f6d5;
-        }
-        .validation-icon { font-size: 20px; }
-        .validation-title {
-            font-weight: 600;
-            font-size: 14px;
-            color: #22543d;
-            flex: 1;
-        }
-        .validation-source {
-            font-size: 11px;
-            color: #718096;
-        }
-        .validation-summary {
-            padding: 10px 16px;
-            font-size: 13px;
-            color: #4a5568;
-            background: #f7faf7;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .validation-items {
-            padding: 8px 0;
-        }
-        .validation-item {
-            display: flex;
-            align-items: flex-start;
-            padding: 10px 16px;
-            gap: 10px;
-            border-bottom: 1px solid #f0fff4;
-        }
-        .validation-item:last-child { border-bottom: none; }
-        .validation-status-valid { background: #f0fff4; }
-        .validation-status-deprecated { background: #fff5f5; }
-        .validation-status-modified { background: #fffaf0; }
-        .validation-status-not_found { background: #f7fafc; }
-        .validation-status-icon {
-            font-size: 16px;
-            flex-shrink: 0;
-            margin-top: 2px;
-        }
-        .validation-item-content { flex: 1; min-width: 0; }
-        .validation-item-name {
-            font-size: 13px;
-            color: #2d3748;
-            margin-bottom: 4px;
-        }
-        .validation-item-status {
-            font-size: 12px;
-            color: #718096;
-            margin-bottom: 2px;
-        }
-        .validation-item-relevance {
-            font-size: 12px;
-            color: #38a169;
-            margin-bottom: 2px;
-        }
-        .validation-item-correction {
-            font-size: 12px;
-            color: #c53030;
-            margin-bottom: 2px;
-            padding: 6px 10px;
-            background: #fff5f5;
-            border-radius: 4px;
-        }
-        .validation-item-link a {
-            font-size: 12px;
-            color: #3182ce;
-            text-decoration: none;
-        }
-        .validation-item-link a:hover { text-decoration: underline; }
-        .validation-corrections {
-            padding: 12px 16px;
-            background: #fffff0;
-            border-top: 1px solid #faf089;
-        }
-        .validation-corrections-title {
-            font-weight: 600;
-            font-size: 13px;
-            color: #744210;
-            margin-bottom: 8px;
-        }
-        .validation-correction-item {
-            font-size: 13px;
-            color: #4a5568;
-            margin-bottom: 6px;
-            line-height: 1.6;
-        }
-        .validation-footer {
-            padding: 8px 16px;
-            font-size: 11px;
-            color: #a0aec0;
-            background: #f7faf7;
-            border-top: 1px solid #e2e8f0;
-            text-align: center;
-        }
-
-        .source-item {
-            display: inline-block;
-            background: #edf2f7;
-            padding: 4px 8px;
-            border-radius: 4px;
-            margin-right: 8px;
-            margin-top: 4px;
-        }
-
-        /* 欢迎页 */
-        .welcome-page {
-            max-width: 700px;
-            margin: 60px auto;
-            text-align: center;
-            padding: 40px;
-        }
-
-        .welcome-icon {
-            font-size: 64px;
-            margin-bottom: 24px;
-        }
-
-        .welcome-title {
-            font-size: 28px;
-            color: var(--primary-color);
-            margin-bottom: 16px;
-        }
-
-        .welcome-desc {
-            font-size: 16px;
-            color: var(--text-secondary);
-            line-height: 1.8;
-            margin-bottom: 32px;
-        }
-
-        .capabilities {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-            text-align: left;
-        }
-
-        .capability-item {
-            background: var(--card-bg);
-            padding: 16px;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .capability-icon {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-
-        .capability-title {
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .capability-desc {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        /* 输入区 */
-        .input-container {
-            padding: 16px 24px 24px;
-            background: var(--card-bg);
-            border-top: 1px solid var(--border-color);
-        }
-
-        .input-wrapper {
-            max-width: 800px;
-            margin: 0 auto;
-            position: relative;
+            gap: 12px;
+            align-items: flex-end;
         }
 
         .chat-input {
-            width: 100%;
-            padding: 16px 60px 16px 20px;
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            font-size: 15px;
-            line-height: 1.5;
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
             resize: none;
-            min-height: 56px;
-            max-height: 200px;
+            min-height: 44px;
+            max-height: 120px;
             font-family: inherit;
             transition: border-color 0.2s;
         }
 
         .chat-input:focus {
             outline: none;
-            border-color: var(--accent-color);
+            border-color: var(--primary);
         }
 
-        .send-btn {
-            position: absolute;
-            right: 8px;
-            bottom: 8px;
-            width: 40px;
-            height: 40px;
-            background: var(--accent-color);
+        .chat-send {
+            padding: 12px 24px;
+            background: var(--primary);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
             transition: background 0.2s;
+            white-space: nowrap;
         }
 
-        .send-btn:hover:not(:disabled) {
-            background: var(--secondary-color);
+        .chat-send:hover {
+            background: var(--accent-hover);
         }
 
-        .send-btn:disabled {
+        .chat-send:disabled {
             background: #a0aec0;
             cursor: not-allowed;
         }
 
-        .input-hint {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-top: 8px;
-            text-align: center;
+        /* Message Styles */
+        .message {
+            margin-bottom: 16px;
+            animation: fadeIn 0.3s ease;
         }
 
-        /* 加载动画 */
-        .loading-indicator {
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-user {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .message-assistant {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .message-user .message-bubble {
+            background: var(--primary);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-assistant .message-bubble {
+            background: var(--bg);
+            color: var(--text);
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-module-tag {
+            display: inline-block;
+            background: rgba(49, 130, 206, 0.1);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-bottom: 8px;
+        }
+
+        /* Loading */
+        .loading {
             display: flex;
             align-items: center;
             gap: 8px;
             color: var(--text-secondary);
             font-size: 14px;
+            padding: 12px 0;
         }
 
         .loading-dots {
@@ -632,9 +439,9 @@
         }
 
         .loading-dots span {
-            width: 8px;
-            height: 8px;
-            background: var(--accent-color);
+            width: 6px;
+            height: 6px;
+            background: var(--primary);
             border-radius: 50%;
             animation: bounce 1.4s infinite ease-in-out both;
         }
@@ -646,76 +453,48 @@
             0%, 80%, 100% { transform: scale(0); }
             40% { transform: scale(1); }
         }
-        
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .modules-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .tools-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
-        /* 模态框 */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
+        @media (max-width: 640px) {
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                padding: 0 16px;
+            }
+            .main {
+                padding: 16px;
+            }
         }
 
-        .modal.active {
-            display: flex;
-        }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
 
-        .modal-content {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 24px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
-
-        .modal-title {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--text-secondary);
-        }
-
-        .modal-body {
-            color: var(--text-secondary);
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        /* 状态提示 */
+        /* Toast */
         .toast {
             position: fixed;
             bottom: 24px;
             left: 50%;
             transform: translateX(-50%) translateY(100px);
-            background: var(--text-primary);
+            background: var(--text);
             color: white;
             padding: 12px 24px;
-            border-radius: 8px;
+            border-radius: var(--radius-sm);
             font-size: 14px;
             z-index: 2000;
             opacity: 0;
@@ -727,428 +506,257 @@
             opacity: 1;
         }
 
-        .toast.success {
-            background: var(--success-color);
-        }
-
-        .toast.error {
-            background: var(--error-color);
-        }
-
-        /* 滚动条 */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e0;
-            border-radius: 3px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #a0aec0;
-        }
-
-        /* 响应式 */
-        @media (max-width: 768px) {
-            .sidebar {
-                display: none;
-            }
-            
-            .capabilities {
-                grid-template-columns: 1fr;
-            }
-        }
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
     </style>
 </head>
 <body>
-    <!-- 头部 -->
+    <!-- Header -->
     <header class="header">
         <div class="header-left">
             <div class="logo">⚖️</div>
-            <h1>国企法务助手</h1>
+            <h1>国企数字法务平台</h1>
         </div>
-        <div class="header-right">
-            <button class="header-btn" onclick="showKnowledgeModal()">📚 知识库</button>
-            <button class="header-btn" onclick="showHelpModal()">❓ 帮助</button>
-        </div>
+        <nav class="header-nav">
+            <button class="nav-btn active" onclick="scrollToSection('modules')">📋 功能模块</button>
+            <button class="nav-btn" onclick="scrollToSection('tools')">🛠️ 小工具</button>
+            <button class="nav-btn" onclick="scrollToSection('chat')">💬 智能咨询</button>
+        </nav>
     </header>
 
-    <!-- 主内容区 -->
-    <div class="main-container">
-        <!-- 侧边栏 -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <button class="new-chat-btn" onclick="createNewChat()">
-                    ➕ 新建对话
-                </button>
-                <button class="new-chat-btn clear-all-btn" onclick="clearAllSessions()" title="清空所有历史对话">
-                    🗑️ 清空历史
-                </button>
-            </div>
-            
-            <div class="sessions-list" id="sessionsList">
-                <!-- 会话列表将动态生成 -->
-            </div>
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Welcome -->
+        <section class="welcome">
+            <h2>欢迎使用国企数字法务平台</h2>
+            <p>集成法律合规咨询、合同审核、案件应对、报告撰写、经营决策审核、制度审核六大核心功能，为您提供全方位的法务合规支持。</p>
+        </section>
 
-            <div class="upload-section">
-                <h3>📎 上传附件</h3>
-                <div class="upload-zone" id="uploadZone">
-                    <input type="file" id="fileInput" accept=".txt,.md,.pdf,.docx,.doc">
-                    <div class="upload-icon">📋</div>
-                    <div class="upload-text">上传文档作为附件</div>
-                    <div class="upload-hint">支持 txt, md, pdf, docx</div>
+        <!-- Smart Chat Section (Top) -->
+        <section id="chat" class="chat-section" style="margin-bottom:40px;">
+            <div class="chat-header">
+                <div class="chat-title">
+                    <span>🤖</span>
+                    <span>智能法务助手</span>
                 </div>
-                <div id="attachmentList" style="margin-top: 8px;"></div>
+                <div class="chat-hint">输入问题，AI自动判断并调用相应模块</div>
             </div>
-        </aside>
-
-        <!-- 聊天区 -->
-        <main class="chat-container">
             <div class="chat-messages" id="chatMessages">
-                <!-- 欢迎页 -->
-                <div class="welcome-page" id="welcomePage">
-                    <div class="welcome-icon">⚖️</div>
-                    <h2 class="welcome-title">国企法务助手</h2>
-                    <p class="welcome-desc">
-                        基于国有企业法务合规体系，
-                        为您提供专业的法律合规咨询、合同审核、诉讼案件管理等服务。
-                    </p>
-                    <div class="capabilities">
-                        <div class="capability-item">
-                            <div class="capability-icon">💬</div>
-                            <div class="capability-title">法务合规咨询</div>
-                            <div class="capability-desc">规章制度合法性、合规性、风险可控性审核</div>
-                        </div>
-                        <div class="capability-item">
-                            <div class="capability-icon">📝</div>
-                            <div class="capability-title">合同管理咨询</div>
-                            <div class="capability-desc">合同全生命周期管理流程和风险提示</div>
-                        </div>
-                        <div class="capability-item">
-                            <div class="capability-icon">📋</div>
-                            <div class="capability-title">附件处理</div>
-                            <div class="capability-desc">上传文档作为附件，支持审核、整理、参考写作等多种指令</div>
-                        </div>
-                        <div class="capability-item">
-                            <div class="capability-icon">🛡️</div>
-                            <div class="capability-title">合规管理体系咨询</div>
-                            <div class="capability-desc">解读"四位一体"合规体系建设要点</div>
-                        </div>
-                        <div class="capability-item">
-                            <div class="capability-icon">⚖️</div>
-                            <div class="capability-title">法条检索与校验</div>
-                            <div class="capability-desc">对接国家法律法规数据库，法条时效性自动验证</div>
-                        </div>
+                <div class="message message-assistant">
+                    <div class="message-bubble">
+                        您好！我是国企数字法务平台的智能助手。请告诉我您需要什么帮助，我会自动调用相应的功能模块为您服务。<br><br>
+                        例如：<br>
+                        • "帮我审核这份合同" → 合同审核模块<br>
+                        • "起草一份起诉状" → 案件应对模块<br>
+                        • "写一份合规管理报告" → 报告撰写模块<br>
+                        • "审核这个上会议题" → 经营决策审核模块<br>
+                        • "检查这个制度是否合规" → 制度审核模块<br>
+                        • "法务咨询问题" → 法律合规咨询模块
                     </div>
                 </div>
             </div>
+            <div class="chat-input-area">
+                <textarea 
+                    class="chat-input" 
+                    id="chatInput" 
+                    placeholder="请输入您的法务问题..."
+                    rows="1"
+                    onkeydown="handleKeyDown(event)"
+                    oninput="autoResize(this)"
+                ></textarea>
+                <button class="chat-send" id="sendBtn" onclick="sendMessage()">发送</button>
+            </div>
+        </section>
 
-            <!-- 输入区 -->
-            <div class="input-container">
-                <div id="inputAttachments" style="display:none; max-width:800px; margin:0 auto 8px; padding:4px 0;"></div>
-                <div class="input-wrapper">
-                    <textarea 
-                        class="chat-input" 
-                        id="chatInput" 
-                        placeholder="请输入您的法务合规问题..."
-                        rows="1"
-                        onkeydown="handleKeyDown(event)"
-                        oninput="autoResize(this)"
-                    ></textarea>
-                    <button class="send-btn" id="sendBtn" onclick="sendMessage()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="22" y1="2" x2="11" y2="13"></line>
-                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                        </svg>
-                    </button>
+        <!-- Tools Section (Middle) -->
+        <section id="tools" class="tools-section" style="margin-bottom:40px;">
+            <h2 class="section-title">🛠️ 小工具</h2>
+            <div class="tools-grid">
+                <div class="tool-card" onclick="openTool('desensitization')">
+                    <div class="tool-icon">🔒</div>
+                    <div class="tool-name">文件脱敏</div>
+                    <div class="tool-desc">智能识别并替换文档中的敏感信息</div>
                 </div>
-                <div class="input-hint">按 Enter 发送，Shift + Enter 换行</div>
+                <div class="tool-card" onclick="openTool('law_search')">
+                    <div class="tool-icon">📑</div>
+                    <div class="tool-name">法条检索</div>
+                    <div class="tool-desc">对接国家法律法规数据库</div>
+                </div>
+                <div class="tool-card" onclick="showToast('功能开发中...', 'info')">
+                    <div class="tool-icon">🔍</div>
+                    <div class="tool-name">案例检索</div>
+                    <div class="tool-desc">类案检索与分析</div>
+                </div>
+                <div class="tool-card" onclick="showToast('功能开发中...', 'info')">
+                    <div class="tool-icon">📥</div>
+                    <div class="tool-name">模板下载</div>
+                    <div class="tool-desc">法务合规文书模板库</div>
+                </div>
             </div>
-        </main>
-    </div>
+        </section>
 
-    <!-- 模态框 -->
-    <div class="modal" id="knowledgeModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">📚 知识库状态</h3>
-                <button class="modal-close" onclick="closeModal('knowledgeModal')">&times;</button>
-            </div>
-            <div class="modal-body" id="knowledgeContent">
-                <p><strong>知识库状态：</strong>已关闭</p>
-                <p style="margin-top: 8px;">系统使用内置法务合规体系，无需外部知识库。</p>
-                <hr style="margin: 16px 0; border: none; border-top: 1px solid #e2e8f0;">
-                <p style="font-size: 12px; color: #718096;">
-                    如需扩展内置法务体系，请联系后台管理员。
-                </p>
-            </div>
-        </div>
-    </div>
+        <!-- Module Grid (Bottom) -->
+        <section id="modules">
+            <h2 class="section-title">📋 功能模块</h2>
+            <div class="modules-grid">
+                <div class="module-card" onclick="openModule('consulting')">
+                    <div class="module-icon">💬</div>
+                    <h3 class="module-title">法律合规咨询</h3>
+                    <p class="module-desc">多轮对话咨询，支持文件上传。涵盖规章制度审核、合规管理、函件往来等法务问题。</p>
+                    <div class="module-tags">
+                        <span class="module-tag">多轮对话</span>
+                        <span class="module-tag">文件上传</span>
+                        <span class="module-tag">函件审核</span>
+                    </div>
+                    <div class="module-enter">进入模块</div>
+                </div>
 
-    <div class="modal" id="helpModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">❓ 使用帮助</h3>
-                <button class="modal-close" onclick="closeModal('helpModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <h4>功能说明</h4>
-                <ul style="margin: 12px 0 16px; padding-left: 20px;">
-                    <li>💬 多轮对话：支持与AI进行连续对话</li>
-                    <li>📋 文档审核：上传文档进行法务合规审核</li>
-                    <li>⚖️ 法条检索：自动对接国家法律法规数据库，验证法条时效性</li>
-                </ul>
-                <h4>示例问题</h4>
-                <ul style="margin: 12px 0; padding-left: 20px;">
-                    <li>"三个100%具体指什么？"</li>
-                    <li>"合同审核的流程是什么？"</li>
-                    <li>"帮我起草一份法治工作总结"</li>
-                    <li>"民法典第1条规定了什么？"</li>
-                    <li>上传附件后："请审核这份合同"、"整理成摘要"、"参考这个写个新方案"</li>
-                </ul>
-                <p style="color: #718096; font-size: 12px; margin-top: 16px;">
-                    ⚠️ 本系统仅供参考，涉及重大决策需法律合规部正式出具意见
-                </p>
-            </div>
-        </div>
-    </div>
+                <div class="module-card" onclick="openModule('contract_review')">
+                    <div class="module-icon">📝</div>
+                    <h3 class="module-title">合同审核</h3>
+                    <p class="module-desc">智能合同审核，商业+法律双重深度审查，法条真实性核验，生成专业审核报告。</p>
+                    <div class="module-tags">
+                        <span class="module-tag">合同提取</span>
+                        <span class="module-tag">法律审核</span>
+                        <span class="module-tag">报告生成</span>
+                    </div>
+                    <div class="module-enter">进入模块</div>
+                </div>
 
-    <!-- Toast提示 -->
+                <div class="module-card" onclick="openModule('case_management')">
+                    <div class="module-icon">⚖️</div>
+                    <h3 class="module-title">案件应对</h3>
+                    <p class="module-desc">案情梳理分析，法律文书自动生成（起诉状、答辩状、证据目录等）。</p>
+                    <div class="module-tags">
+                        <span class="module-tag">案情梳理</span>
+                        <span class="module-tag">文书撰写</span>
+                        <span class="module-tag">证据整理</span>
+                    </div>
+                    <div class="module-enter">进入模块</div>
+                </div>
+
+                <div class="module-card" onclick="openModule('report_writing')">
+                    <div class="module-icon">📊</div>
+                    <h3 class="module-title">报告撰写</h3>
+                    <p class="module-desc">法治建设总结、合规管理报告、内控管理报告、风险报告、律师管理报告等。</p>
+                    <div class="module-tags">
+                        <span class="module-tag">法治总结</span>
+                        <span class="module-tag">合规报告</span>
+                        <span class="module-tag">风险报告</span>
+                    </div>
+                    <div class="module-enter">进入模块</div>
+                </div>
+
+                <div class="module-card" onclick="openModule('decision_review')">
+                    <div class="module-icon">📋</div>
+                    <h3 class="module-title">经营决策审核</h3>
+                    <p class="module-desc">审核上会议题、请示签报，提供法律合规风险评估和修改建议。</p>
+                    <div class="module-tags">
+                        <span class="module-tag">议题审核</span>
+                        <span class="module-tag">签报审核</span>
+                        <span class="module-tag">风险评估</span>
+                    </div>
+                    <div class="module-enter">进入模块</div>
+                </div>
+
+                <div class="module-card" onclick="openModule('regulation_review')">
+                    <div class="module-icon">📜</div>
+                    <h3 class="module-title">制度审核</h3>
+                    <p class="module-desc">对比现行法律、政策、公司制度，检查制度冲突，确保合规性。</p>
+                    <div class="module-tags">
+                        <span class="module-tag">法律对比</span>
+                        <span class="module-tag">政策检查</span>
+                        <span class="module-tag">冲突检测</span>
+                    </div>
+                    <div class="module-enter">进入模块</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast -->
     <div class="toast" id="toast"></div>
 
     <script>
-        // 全局状态
-        let currentSessionId = null;
-        let messages = [];
-        let isGenerating = false;
-        let isAbortRequested = false;
-        let currentAbortController = null;
-        
-        // 附件列表
-        let attachments = [];  // [{file_id, filename, file_size}]
+        // Module routes
+        const MODULE_ROUTES = {
+            consulting: '/modules/consulting/',
+            contract_review: '/modules/contract_review/',
+            case_management: '/modules/case_management/',
+            report_writing: '/modules/report_writing/',
+            decision_review: '/modules/decision_review/',
+            regulation_review: '/modules/regulation_review/'
+        };
 
-        // API基础URL
-        const API_BASE = '';
+        const TOOL_ROUTES = {
+            desensitization: '/tools/desensitization/',
+            law_search: '/tools/law_search/'
+        };
 
-        // 初始化
-        document.addEventListener('DOMContentLoaded', () => {
-            loadSessions();
-            initUploadZone();
-        });
+        // Module detection keywords
+        const MODULE_KEYWORDS = {
+            consulting: ['咨询', '问题', '法律', '合规', '规定', '制度', '函件', '复函', '回函'],
+            contract_review: ['合同', '协议', '签约', '甲方', '乙方', '条款', '审核合同'],
+            case_management: ['案件', '诉讼', '仲裁', '起诉', '答辩', '证据', '判决', '裁定', '起诉状', '答辩状'],
+            report_writing: ['报告', '总结', '法治建设', '合规管理', '内控', '风险报告', '律师管理', '季报', '年报'],
+            decision_review: ['上会', '议题', '请示', '签报', '决策', '审批'],
+            regulation_review: ['制度', '规章', '管理办法', '规定', '规范', '制度审核']
+        };
 
-        // 加载会话列表
-        async function loadSessions() {
-            // 简化版：使用localStorage
-            const sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
-            renderSessions(sessions);
-        }
-
-        // 渲染会话列表
-        function renderSessions(sessions) {
-            const container = document.getElementById('sessionsList');
-            if (sessions.length === 0) {
-                container.innerHTML = '<div style="padding: 16px; color: #718096; font-size: 13px; text-align: center;">暂无历史对话</div>';
-                return;
-            }
-            
-            container.innerHTML = sessions.map(s => `
-                <div class="session-item ${s.id === currentSessionId ? 'active' : ''}" onclick="loadSession('${s.id}')">
-                    <span class="session-icon">💬</span>
-                    <span class="session-title">${s.title || '新对话'}</span>
-                    <button class="delete-session-btn" onclick="event.stopPropagation(); deleteSession('${s.id}')" title="删除此对话">×</button>
-                </div>
-            `).join('');
-        }
-
-        // 创建新对话
-        function createNewChat() {
-            currentSessionId = 'session_' + Date.now();
-            messages = [];
-            const welcomePage = document.getElementById('welcomePage');
-            if (welcomePage) {
-                document.getElementById('chatMessages').innerHTML = welcomePage.outerHTML;
-                document.getElementById('welcomePage').style.display = 'block';
-            }
-            
-            // 保存到localStorage
-            const sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
-            sessions.unshift({ id: currentSessionId, title: '新对话', messages: [] });
-            localStorage.setItem('chatSessions', JSON.stringify(sessions.slice(0, 20)));
-            loadSessions();
-        }
-
-        // 加载指定会话
-        function loadSession(sessionId) {
-            const sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
-            const session = sessions.find(s => s.id === sessionId);
-            if (session) {
-                currentSessionId = sessionId;
-                messages = session.messages || [];
-                renderMessages();
-                loadSessions();
+        // Open module
+        function openModule(moduleName) {
+            const route = MODULE_ROUTES[moduleName];
+            if (route) {
+                window.open(route, '_blank');
             }
         }
 
-        // 渲染法条校验报告面板
-        function renderValidationReport(report) {
-            if (!report || !report.total) return '';
+        // Open tool
+        function openTool(toolName) {
+            const route = TOOL_ROUTES[toolName];
+            if (route) {
+                window.open(route, '_blank');
+            }
+        }
 
-            let html = '<div class="validation-report">';
-            html += '<div class="validation-header">';
-            html += '<span class="validation-icon">⚖️</span>';
-            html += '<span class="validation-title">法条自动校验报告</span>';
-            html += '<span class="validation-source">来源：' + (report.source || '国家法律法规数据库') + '</span>';
-            html += '</div>';
+        // Detect module from message
+        function detectModule(message) {
+            let bestModule = 'consulting';
+            let bestScore = 0;
 
-            html += '<div class="validation-summary">' + (report.summary || '校验完成') + '</div>';
-
-            if (report.items && report.items.length > 0) {
-                html += '<div class="validation-items">';
-                for (const item of report.items) {
-                    const statusClass = 'validation-status-' + (item.status || 'unknown');
-                    html += '<div class="validation-item ' + statusClass + '">';
-                    html += '<span class="validation-status-icon">' + getStatusEmoji(item.status) + '</span>';
-                    html += '<div class="validation-item-content">';
-                    html += '<div class="validation-item-name">';
-                    if (item.article) {
-                        html += '<strong>' + escapeHtml(item.law_name || '') + '</strong> 第' + item.article + '条';
-                    } else {
-                        html += '<strong>' + escapeHtml(item.law_name || item.reference || '') + '</strong>';
+            for (const [module, keywords] of Object.entries(MODULE_KEYWORDS)) {
+                let score = 0;
+                for (const keyword of keywords) {
+                    if (message.includes(keyword)) {
+                        score++;
                     }
-                    html += '</div>';
-                    html += '<div class="validation-item-status">' + (item.status_label || '') + '</div>';
-                    if (item.relevance) {
-                        html += '<div class="validation-item-relevance">关联性：' + item.relevance + '</div>';
-                    }
-                    if (item.correction && item.status !== 'valid') {
-                        html += '<div class="validation-item-correction">' + item.correction + '</div>';
-                    }
-                    if (item.detail_url) {
-                        html += '<div class="validation-item-link"><a href="' + item.detail_url + '" target="_blank" rel="noopener">🔗 查看官方原文</a></div>';
-                    }
-                    html += '</div>';
-                    html += '</div>';
                 }
-                html += '</div>';
-            }
-
-            if (report.has_issues) {
-                html += '<div class="validation-corrections">';
-                html += '<div class="validation-corrections-title">🔧 修正建议</div>';
-                const issueItems = (report.items || []).filter(function(i) {
-                    return i.status === 'deprecated' || i.status === 'modified' || i.status === 'not_found';
-                });
-                for (const item of issueItems) {
-                    html += '<div class="validation-correction-item">';
-                    html += '• <strong>' + escapeHtml(item.reference || '') + '</strong>：';
-                    html += item.correction || '请核实该法条的准确性';
-                    if (item.detail_url) {
-                        html += ' <a href="' + item.detail_url + '" target="_blank" rel="noopener" style="font-size:12px;color:#3182ce;">查看最新版本 →</a>';
-                    }
-                    html += '</div>';
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestModule = module;
                 }
-                html += '<div class="validation-correction-item" style="margin-top:8px;color:#e53e3e;">• 建议在法律文书和合同审查中使用现行有效法律版本</div>';
-                html += '</div>';
             }
 
-            html += '<div class="validation-footer">本报告由系统自动生成，仅供参考。重要法律事务请咨询专业律师。</div>';
-            html += '</div>';
-            return html;
+            return bestModule;
         }
 
-        function getStatusEmoji(status) {
-            const map = {
-                'valid': '✅',
-                'deprecated': '❌',
-                'modified': '⚠️',
-                'not_found': '❓',
-                'not_effective': '🕐',
-                'name_mismatch': '⚠️',
-                'resolved': '⚠️',
-                'error': '❌'
+        // Get module display name
+        function getModuleName(module) {
+            const names = {
+                consulting: '法律合规咨询',
+                contract_review: '合同审核',
+                case_management: '案件应对',
+                report_writing: '报告撰写',
+                decision_review: '经营决策审核',
+                regulation_review: '制度审核'
             };
-            return map[status] || '❓';
+            return names[module] || module;
         }
 
-        function escapeHtml(text) {
-            if (!text) return '';
-            return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        }
+        // Chat functions
+        let isGenerating = false;
+        let chatMessages = [];
 
-        // 渲染消息列表
-        function renderMessages() {
-            const container = document.getElementById('chatMessages');
-            const welcomePage = document.getElementById('welcomePage');
-            
-            if (messages.length === 0) {
-                if (welcomePage) {
-                    welcomePage.style.display = 'block';
-                }
-                return;
-            }
-            
-            if (welcomePage) {
-                welcomePage.style.display = 'none';
-            }
-            
-            container.innerHTML = messages.map((msg, index) => `
-                <div class="message ${msg.role}-message">
-                    <div class="message-header">
-                        <div class="message-avatar ${msg.role}-avatar">
-                            ${msg.role === 'user' ? '👤' : '🤖'}
-                        </div>
-                        <span class="message-role">${msg.role === 'user' ? '您' : 'AI助手'}</span>
-                        ${msg.law_verification && msg.law_verification.searched ? '<span style="font-size:11px;color:#38a169;margin-left:8px;">⚖️ 法条已校验</span>' : ''}
-                    </div>
-                    <div class="message-content">
-                        ${formatContent(msg.content)}
-                        ${msg.law_verification && msg.law_verification.searched ? `
-                            <div class="message-sources" style="border-top-color:#c6f6d5; background:#f0fff4;">
-                                ⚖️ 本法条引用已通过<strong>${msg.law_verification.source}</strong>检索验证
-                            </div>
-                        ` : ''}
-                        ${renderValidationReport(msg.law_validation_report)}
-                        ${msg.sources && msg.sources.length > 0 ? `
-                            <div class="message-sources">
-                                <strong>参考来源：</strong>
-                                ${msg.sources.map(s => `<span class="source-item">${s.source || '知识库'}</span>`).join('')}
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            `).join('');
-            
-            container.scrollTop = container.scrollHeight;
-        }
-
-        // 格式化内容（处理代码块等）
-        function formatContent(content) {
-            if (!content) return '';
-            
-            // 转义HTML
-            let formatted = content
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-            
-            // 处理代码块
-            formatted = formatted.replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-            
-            // 处理行内代码
-            formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
-            
-            // 处理换行
-            formatted = formatted.replace(/\n/g, '<br>');
-            
-            return formatted;
-        }
-
-        // 处理键盘事件
         function handleKeyDown(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
@@ -1156,499 +764,114 @@
             }
         }
 
-        // 自动调整输入框高度
         function autoResize(textarea) {
             textarea.style.height = 'auto';
-            textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
         }
 
-        // 发送消息
         async function sendMessage() {
             const input = document.getElementById('chatInput');
             const content = input.value.trim();
             
             if (!content || isGenerating) return;
             
-            // 添加用户消息
-            messages.push({ role: 'user', content });
+            // Add user message to history
+            chatMessages.push({ role: 'user', content });
+            addMessage('user', content);
             input.value = '';
             input.style.height = 'auto';
-            renderMessages();
             
-            // 显示加载状态
+            // Detect module
+            const detectedModule = detectModule(content);
+            
+            // Show loading
             isGenerating = true;
             document.getElementById('sendBtn').disabled = true;
-            
-            // 构建加载提示文案
-            let loadingText = '正在处理...';
-            if (attachments.length > 0) {
-                const fileNames = attachments.map(a => a.filename).join('、');
-                loadingText = `正在处理文档：${fileNames}`;
-            }
-            
-            // 添加临时加载消息（更明显的加载动画）
-            const loadingMsg = document.createElement('div');
-            loadingMsg.className = 'message assistant-message';
-            loadingMsg.id = 'loadingMessage';
-            loadingMsg.innerHTML = `
-                <div class="message-header">
-                    <div class="message-avatar assistant-avatar">🤖</div>
-                    <span class="message-role">AI助手</span>
-                </div>
-                <div class="message-content" style="min-height: 60px;">
-                    <div class="loading-indicator" style="padding: 12px 0;">
-                        <div class="loading-spinner" style="width: 28px; height: 28px; border: 3px solid #e2e8f0; border-top: 3px solid #3182ce; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px;"></div>
-                        <div style="text-align: center; color: #4a5568; font-size: 14px;">${loadingText}</div>
-                        <div style="text-align: center; color: #a0aec0; font-size: 12px; margin-top: 4px;" id="loadingSubText">请稍候，AI正在为您处理...</div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('chatMessages').appendChild(loadingMsg);
-            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
-            
-            // 定时更新加载提示，让用户知道系统还在运行
-            let waitTime = 0;
-            const loadingInterval = setInterval(() => {
-                waitTime += 3;
-                const subText = document.getElementById('loadingSubText');
-                if (subText) {
-                    if (waitTime < 10) {
-                        subText.textContent = `已等待 ${waitTime} 秒，正在处理中...`;
-                    } else if (waitTime < 30) {
-                        subText.textContent = `已等待 ${waitTime} 秒，文档内容较多，请耐心等待...`;
-                    } else if (waitTime < 60) {
-                        subText.textContent = `已等待 ${waitTime} 秒，正在深入分析文档...`;
-                    } else {
-                        subText.textContent = `已等待 ${waitTime} 秒，处理时间较长，请保持页面打开...`;
-                    }
-                }
-            }, 3000);
+            const loadingId = addLoading();
             
             try {
-                // 构建消息历史
-                const chatMessages = messages.map(m => ({
-                    role: m.role,
-                    content: m.content
-                }));
+                const response = await fetch('/api/smart-chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: chatMessages })
+                });
                 
-                // 构建请求数据（附带附件）
-                const requestData = {
-                    messages: chatMessages,
-                    stream: true,
-                    attachments: attachments.map(a => a.file_id)
-                };
+                const result = await response.json();
                 
-                console.log('[Chat] 发送请求:', JSON.stringify(requestData, null, 2));
+                removeLoading(loadingId);
                 
-                let usedStream = false;
-                let response;
-                let streamError = null;
-                
-                // 先尝试流式API
-                try {
-                    console.log('[Chat] 尝试流式API...');
-                    response = await fetch(`${API_BASE}/api/chat/stream`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(requestData)
-                    });
-                    
-                    console.log('[Chat] 流式API响应状态:', response.status, 'content-type:', response.headers.get('content-type'));
-                    
-                    if (response.ok) {
-                        usedStream = true;
-                    } else {
-                        throw new Error(`HTTP ${response.status}`);
-                    }
-                } catch (e) {
-                    streamError = e;
-                    console.log('[Chat] 流式API失败:', e.message);
-                }
-                
-                // 流式API失败，回退到非流式
-                if (!usedStream) {
-                    console.log('[Chat] 回退到非流式API...');
-                    requestData.stream = false;
-                    response = await fetch(`${API_BASE}/api/chat`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(requestData)
-                    });
-                    console.log('[Chat] 非流式API响应状态:', response.status);
-                }
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('[Chat] 请求失败:', response.status, errorText);
-                    throw new Error(`HTTP ${response.status}: ${errorText}`);
-                }
-                
-                console.log('[Chat] 使用流式:', usedStream);
-                
-                // 移除加载消息和清理定时器
-                loadingMsg.remove();
-                clearInterval(loadingInterval);
-                
-                if (usedStream) {
-                    // 流式响应处理
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder();
-                    let fullResponse = '';
-                    let readCount = 0;
-                    
-                    // 创建助手消息
-                    const assistantMsg = {
-                        role: 'assistant',
-                        content: '',
-                        sources: []
-                    };
-                    messages.push(assistantMsg);
-                    
-                    // 创建消息元素
-                    const msgElement = document.createElement('div');
-                    msgElement.className = 'message assistant-message';
-                    msgElement.innerHTML = `
-                        <div class="message-header">
-                            <div class="message-avatar assistant-avatar">🤖</div>
-                            <span class="message-role">AI助手</span>
-                        </div>
-                        <div class="message-content" id="currentResponse">
-                            <span style="color:#a0aec0;font-size:13px;">正在接收回复...</span>
-                        </div>
-                    `;
-                    document.getElementById('chatMessages').appendChild(msgElement);
-                    
-                    const container = document.getElementById('chatMessages');
-                    
-                    try {
-                        while (true) {
-                            const { done, value } = await reader.read();
-                            if (done) break;
-                            
-                            readCount++;
-                            const chunk = decoder.decode(value, { stream: true });
-                            console.log(`[Chat] 流式数据块 #${readCount} 完整内容:`);
-                            console.log(chunk);
-                            console.log(`[Chat] 数据块长度: ${chunk.length}`);
-                            
-                            const lines = chunk.split('\n');
-                            console.log(`[Chat] 解析到 ${lines.length} 行`);
-                            
-                            for (const line of lines) {
-                                console.log(`[Chat] 处理行: "${line.substring(0, 200)}"` );
-                                
-                                if (line.startsWith('data: ')) {
-                                    try {
-                                        const jsonStr = line.slice(6);
-                                        const data = JSON.parse(jsonStr);
-                                        console.log(`[Chat] 解析JSON成功:`, data);
-                                        
-                                        if (data.done) {
-                                            console.log('[Chat] 流式响应结束');
-                                            continue;
-                                        }
-                                        if (data.law_search) {
-                                            console.log('[Chat] 法条已检索:', data.source);
-                                            const responseEl = document.getElementById('currentResponse');
-                                            if (responseEl && !fullResponse) {
-                                                responseEl.innerHTML = '<span style="color:#38a169;font-size:13px;">⚖️ 已从' + data.source + '检索相关法条...</span>';
-                                            }
-                                            continue;
-                                        }
-                                        if (data.validation_report) {
-                                            console.log('[Chat] 法条校验报告:', data.validation_report.summary);
-                                            assistantMsg.law_validation_report = data.validation_report;
-                                            continue;
-                                        }
-                                        if (data.hasOwnProperty('content') && data.content) {
-                                            console.log(`[Chat] 收到content: "${data.content.substring(0, 100)}"`);
-                                            fullResponse += data.content;
-                                            assistantMsg.content = fullResponse;
-                                            const responseEl = document.getElementById('currentResponse');
-                                            if (responseEl) {
-                                                responseEl.innerHTML = formatContent(fullResponse);
-                                            }
-                                            container.scrollTop = container.scrollHeight;
-                                        }
-                                    } catch (e) {
-                                        console.log('[Chat] 解析JSON失败:', e.message, '行内容:', line.substring(0, 200));
-                                    }
-                                }
-                            }
-                        }
-                    } catch (readError) {
-                        console.error('[Chat] 流式读取错误:', readError);
-                    }
-                    
-                    console.log('[Chat] 流式回复完成, 总长度:', fullResponse.length);
-                    console.log('[Chat] 完整回复内容:', fullResponse);
-                    
-                    // 如果流式响应为空，显示提示
-                    if (!fullResponse) {
-                        const responseEl = document.getElementById('currentResponse');
-                        if (responseEl) {
-                            responseEl.innerHTML = '<span style="color:#e53e3e;">抱歉，AI未能返回有效回复。请重试。</span>';
-                        }
-                    }
-
-                    // 流式完成后重新渲染，显示校验报告
-                    if (assistantMsg.law_validation_report) {
-                        renderMessages();
-                    }
-                } else {
-                    // 非流式响应处理
-                    console.log('[Chat] 解析非流式响应...');
-                    const result = await response.json();
-                    console.log('[Chat] 非流式响应数据:', JSON.stringify(result, null, 2));
-                    
-                    const fullResponse = result.response || '抱歉，未能获取到有效回复。';
-                    
-                    // 创建助手消息
-                    const assistantMsg = {
-                        role: 'assistant',
-                        content: fullResponse,
-                        sources: result.sources || [],
-                        law_verification: result.law_verification || null,
-                        law_validation_report: result.law_validation_report || null
-                    };
-                    messages.push(assistantMsg);
-                    
-                    // 渲染消息
-                    renderMessages();
-                }
-                
-                // 更新会话标题
-                updateSessionTitle(content);
+                // Add assistant message to history
+                const reply = result.response || '抱歉，我无法处理您的请求。请重试。';
+                chatMessages.push({ role: 'assistant', content: reply });
+                addMessage('assistant', reply, detectedModule);
                 
             } catch (error) {
-                console.error('Chat error:', error);
-                clearInterval(loadingInterval);
-                loadingMsg.remove();
-                showToast(`请求失败: ${error.message}`, 'error');
-                
-                // 添加错误消息到对话
-                const errorMsg = {
-                    role: 'assistant',
-                    content: `⚠️ 抱歉，请求出现错误：${error.message}\n\n请检查网络连接或服务器状态。`,
-                    sources: []
-                };
-                messages.push(errorMsg);
-                renderMessages();
+                removeLoading(loadingId);
+                addMessage('assistant', `请求失败：${error.message}。请检查网络连接或服务器状态。`);
             } finally {
                 isGenerating = false;
                 document.getElementById('sendBtn').disabled = false;
-                
-                // 保存消息
-                saveSession();
             }
         }
 
-        // 更新会话标题
-        function updateSessionTitle(firstMessage) {
-            const title = firstMessage.slice(0, 30) + (firstMessage.length > 30 ? '...' : '');
-            const sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
-            const idx = sessions.findIndex(s => s.id === currentSessionId);
-            if (idx !== -1) {
-                sessions[idx].title = title;
-                sessions[idx].messages = messages;
-                localStorage.setItem('chatSessions', JSON.stringify(sessions));
+        function addMessage(role, content, module = null) {
+            const container = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = `message message-${role}`;
+            
+            let moduleTag = '';
+            if (module && role === 'assistant') {
+                moduleTag = `<div class="message-module-tag">📍 ${getModuleName(module)}模块</div>`;
             }
-            loadSessions();
+            
+            div.innerHTML = `
+                <div class="message-bubble">
+                    ${moduleTag}
+                    ${content.replace(/\n/g, '<br>')}
+                </div>
+            `;
+            
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
         }
 
-        // 保存当前会话
-        function saveSession() {
-            const sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
-            const idx = sessions.findIndex(s => s.id === currentSessionId);
-            if (idx !== -1) {
-                sessions[idx].messages = messages;
-                localStorage.setItem('chatSessions', JSON.stringify(sessions));
-            }
-        }
-
-        // 删除单个会话
-        function deleteSession(sessionId) {
-            if (!confirm('确定要删除这条对话吗？')) {
-                return;
-            }
-            
-            let sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
-            sessions = sessions.filter(s => s.id !== sessionId);
-            localStorage.setItem('chatSessions', JSON.stringify(sessions));
-            
-            // 如果删除的是当前会话，切换到新对话
-            if (sessionId === currentSessionId) {
-                createNewChat();
-            } else {
-                loadSessions();
-            }
-        }
-
-        // 清空所有历史会话
-        function clearAllSessions() {
-            const sessions = JSON.parse(localStorage.getItem('chatSessions') || '[]');
-            if (sessions.length === 0) {
-                alert('没有可以清空的历史对话');
-                return;
-            }
-            
-            if (!confirm(`确定要清空所有 ${sessions.length} 条历史对话吗？\n此操作不可恢复！`)) {
-                return;
-            }
-            
-            localStorage.removeItem('chatSessions');
-            createNewChat();
-            alert('所有历史对话已清空');
-        }
-
-        // 初始化上传区域
-        function initUploadZone() {
-            const zone = document.getElementById('uploadZone');
-            const input = document.getElementById('fileInput');
-            
-            zone.addEventListener('click', () => input.click());
-            
-            zone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                zone.classList.add('dragover');
-            });
-            
-            zone.addEventListener('dragleave', () => {
-                zone.classList.remove('dragover');
-            });
-            
-            zone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                zone.classList.remove('dragover');
-                handleFiles(e.dataTransfer.files);
-            });
-            
-            input.addEventListener('change', () => {
-                handleFiles(input.files);
-                input.value = '';
-            });
-        }
-
-        // 处理上传文件作为附件
-        async function handleFiles(files) {
-            if (files.length === 0) return;
-            
-            for (const file of files) {
-                const formData = new FormData();
-                formData.append('file', file);
-                
-                try {
-                    const response = await fetch(`${API_BASE}/api/attachments`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
-                        throw new Error(errorData.detail || `HTTP ${response.status}`);
-                    }
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        attachments.push({
-                            file_id: result.file_id,
-                            filename: result.filename,
-                            file_size: result.file_size
-                        });
-                        updateAttachmentDisplay();
-                        showToast(`文件已保存为附件: ${result.filename}`, 'success');
-                    }
-                } catch (error) {
-                    console.error('Upload error:', error);
-                    showToast(`附件上传失败：${error.message}`, 'error');
-                }
-            }
-        }
-        
-        // 更新附件显示
-        function updateAttachmentDisplay() {
-            // 侧边栏附件列表
-            const sideList = document.getElementById('attachmentList');
-            if (sideList) {
-                if (attachments.length === 0) {
-                    sideList.innerHTML = '';
-                } else {
-                    sideList.innerHTML = attachments.map((att, i) => `
-                        <div style="font-size:11px; padding:4px 8px; background:#f7fafc; border-radius:4px; margin-top:4px; display:flex; justify-content:space-between; align-items:center;">
-                            <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📎 ${att.filename}</span>
-                            <button onclick="removeAttachment(${i})" style="border:none; background:none; cursor:pointer; color:#e53e3e; font-size:14px; padding:0 4px;">×</button>
+        function addLoading() {
+            const container = document.getElementById('chatMessages');
+            const div = document.createElement('div');
+            div.className = 'message message-assistant';
+            div.id = 'loading-' + Date.now();
+            div.innerHTML = `
+                <div class="message-bubble">
+                    <div class="loading">
+                        <div class="loading-dots">
+                            <span></span><span></span><span></span>
                         </div>
-                    `).join('');
-                }
-            }
-            
-            // 输入框上方附件列表
-            const inputAttEl = document.getElementById('inputAttachments');
-            if (inputAttEl) {
-                if (attachments.length === 0) {
-                    inputAttEl.style.display = 'none';
-                    inputAttEl.innerHTML = '';
-                } else {
-                    inputAttEl.style.display = 'block';
-                    inputAttEl.innerHTML = `
-                        <span style="font-size:12px; color:#718096;">已附加：</span>
-                        ${attachments.map((att, i) => `
-                            <span style="display:inline-block; background:#edf2f7; padding:2px 8px; border-radius:12px; font-size:11px; margin:2px 4px 2px 0;">
-                                📎 ${att.filename}
-                                <button onclick="removeAttachment(${i})" style="border:none; background:none; cursor:pointer; color:#e53e3e; font-size:13px; padding:0 2px; margin-left:4px;">×</button>
-                            </span>
-                        `).join('')}
-                    `;
-                }
-            }
-        }
-        
-        // 移除附件（全局函数，供 onclick 调用）
-        window.removeAttachment = function(index) {
-            const att = attachments[index];
-            if (att) {
-                // 通知后端删除
-                fetch(`${API_BASE}/api/attachments/${att.file_id}`, { method: 'DELETE' }).catch(() => {});
-                attachments.splice(index, 1);
-                updateAttachmentDisplay();
-            }
-        };
-
-        // 显示知识库模态框（静态内容）
-        function showKnowledgeModal() {
-            document.getElementById('knowledgeModal').classList.add('active');
+                        <span>正在分析并调用相应模块...</span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            return div.id;
         }
 
-        // 显示帮助模态框
-        function showHelpModal() {
-            document.getElementById('helpModal').classList.add('active');
+        function removeLoading(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
         }
 
-        // 关闭模态框
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
+        // Scroll to section
+        function scrollToSection(sectionId) {
+            document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
         }
 
-        // 显示Toast提示
+        // Toast
         function showToast(message, type = 'info') {
             const toast = document.getElementById('toast');
             toast.textContent = message;
-            toast.className = 'toast ' + type + ' show';
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
+            toast.className = `toast ${type} show`;
+            setTimeout(() => toast.classList.remove('show'), 3000);
         }
-
-        // 点击模态框外部关闭
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.remove('active');
-                }
-            });
-        });
     </script>
 </body>
 </html>
