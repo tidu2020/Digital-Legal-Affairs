@@ -707,7 +707,7 @@
         function openModule(moduleName) {
             const route = MODULE_ROUTES[moduleName];
             if (route) {
-                window.open(route, '_blank');
+                window.location.href = route;
             }
         }
 
@@ -715,7 +715,7 @@
         function openTool(toolName) {
             const route = TOOL_ROUTES[toolName];
             if (route) {
-                window.open(route, '_blank');
+                window.location.href = route;
             }
         }
 

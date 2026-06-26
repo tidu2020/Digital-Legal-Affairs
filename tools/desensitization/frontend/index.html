@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>文件脱敏工具 - 国企数字法务平台</title>
     <style>
-        :root { --primary:#1a365d; --primary-light:#2c5282; --accent:#3182ce; --bg:#f7fafc; --card:#fff; --text:#1a202c; --text-secondary:#4a5568; --border:#e2e8f0; --success:#38a169; --warning:#d69e2e; --danger:#e53e3e; --radius:12px; --radius-sm:8px; }
+        :root { --primary:#8B1A1A; --primary-light:#A52A2A; --accent:#B8860B; --bg:#faf8f6; --card:#fff; --text:#1a202c; --text-secondary:#4a5568; --border:#e8e0d8; --success:#38a169; --warning:#d69e2e; --danger:#c62828; --radius:12px; --radius-sm:8px; }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
         .header { background:linear-gradient(135deg,var(--primary),var(--primary-light)); color:white; padding:0 24px; height:56px; display:flex; align-items:center; justify-content:space-between; }
@@ -23,7 +23,7 @@
         .upload-icon { font-size:48px; margin-bottom:12px; }
         .upload-text { font-size:14px; color:var(--text-secondary); }
         .file-list { margin-top:16px; }
-        .file-item { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#f7fafc; border-radius:var(--radius-sm); margin-bottom:8px; font-size:13px; }
+        .file-item { display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#faf8f6; border-radius:var(--radius-sm); margin-bottom:8px; font-size:13px; }
         .file-item.success { border-left:3px solid var(--success); }
         .file-item.error { border-left:3px solid var(--danger); }
         .progress-section { display:none; margin-bottom:24px; }
@@ -36,7 +36,7 @@
         .result-actions { display:flex; gap:12px; margin-top:16px; }
         .btn { padding:10px 20px; border:none; border-radius:var(--radius-sm); font-size:14px; cursor:pointer; }
         .btn-primary { background:var(--primary); color:white; }
-        .btn-primary:hover { background:#2b6cb0; }
+        .btn-primary:hover { background:var(--primary-light); }
         .btn-success { background:var(--success); color:white; }
         .btn-success:hover { background:#2f855a; }
         .btn-secondary { background:var(--border); color:var(--text); }
@@ -117,7 +117,7 @@
             el.innerHTML = selectedFiles.map((f, i) => `
                 <div class="file-item">
                     <span>📎 ${f.name} (${(f.size / 1024).toFixed(1)} KB)</span>
-                    <button onclick="removeFile(${i})" style="border:none;background:none;cursor:pointer;color:#e53e3e;">×</button>
+                    <button onclick="removeFile(${i})" style="border:none;background:none;cursor:pointer;color:#c62828;">×</button>
                 </div>
             `).join('');
         }
